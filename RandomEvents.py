@@ -1,4 +1,4 @@
-"Written by Tomer Caspi with the assistance of Cursor.ai"
+"Written by Tomer279 with the assistance of Cursor.ai"
 
 # =============================================================================
 # IMPORTS AND GLOBAL SETTINGS
