@@ -1,7 +1,7 @@
 # Nuclear Reactor Stochastic Simulation
 
 A comprehensive Python library for simulating neutron population dynamics in nuclear reactors using stochastic differential equations with various dead time effects.
-The library is developed with the assitance of Cursor.ai.
+The library is developed with the assitance of Cursor.ai, in particular for documentation, plotting, and data management.
 
 ## Features
 
