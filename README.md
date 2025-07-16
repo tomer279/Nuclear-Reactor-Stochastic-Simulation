@@ -16,9 +16,5 @@ This project implements stochastic and Euler-Maruyama simulations for nuclear re
 This project is actively being developed. See [ROADMAP.md](ROADMAP.md) for planned improvements.
 
 ## License
+MIT License - see [LICENSE](LICENSE) for details.
 
-<<<<<<< HEAD
-MIT License - see [LICENSE](LICENSE) for details.
-=======
-MIT License - see [LICENSE](LICENSE) for details.
->>>>>>> 477d73ad53b2cef160036ac7b1b252243adf7f8e
