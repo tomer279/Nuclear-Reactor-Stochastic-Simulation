@@ -1,4 +1,4 @@
-"Written by Tomer279 with the assistance of Cursor.ai"
+""" Written by Tomer279 with the assistance of Cursor.ai """
 
 # =============================================================================
 # IMPORTS AND GLOBAL SETTINGS
@@ -315,6 +315,106 @@ def _generate_tau_for_distribution(num_values, distribution='normal', **params):
     
     return tau
 
+
+def calculate_all_count_rates(simul_time_vec, simul_detect_vec, em_detect_vec = None,
+                              em_const_detect_vec = None, em_exp_detect_vec = None,
+                              mean_tau = None):
+    """
+   Calculate all types of count rates in one organized function.
+   
+   Parameters
+   ----------
+   simul_time_vec : list
+       List of time matrices
+   simul_detect_vec : list
+       List of detection matrices
+   em_detect_vec : list, optional
+       List of Euler-Maruyama detection arrays (without dead time)
+   em_const_detect_vec : list, optional
+       List of Euler-Maruyama detection arrays (with constant dead time)
+   mean_tau : float, optional
+       Mean dead time for calculations
+
+       
+   Returns
+   -------
+   dict
+       Dictionary containing all calculated count rates with the following keys:
+           
+           - 'stochastic_basic': np.ndarray
+           Count rates from stochastic simulation without dead time effects.
+           Shape: (num_fission_values * num_trajectories,)
+           Values: Counts per second (float)
+           
+       - 'stochastic_const_tau': np.ndarray (if mean_tau provided)
+           Count rates from stochastic simulation with constant dead time.
+           Shape: (num_fission_values * num_trajectories,)
+           Values: Counts per second (float)
+           
+       - 'em_basic': np.ndarray (if em_detect_vec provided)
+           Count rates from Euler-Maruyama simulation without dead time.
+           Shape: (num_fission_values,)
+           Values: Counts per second (float)
+           
+       - 'em_const_tau': np.ndarray (if em_const_detect_vec provided)
+           Count rates from Euler-Maruyama simulation with constant dead time.
+           Shape: (num_fission_values,)
+           Values: Counts per second (float)
+           
+       - 'theoretical_approx': np.ndarray 
+           (if mean_tau provided and stochastic_basic exists)
+           Theoretical approximation using exponential dead time correction.
+           Shape: (num_fission_values * num_trajectories,)
+           Values: Counts per second (float)
+   """
+    
+    results = {}
+    
+    # Calculate stochastic count rates
+    print("Calculating stochastic count rates")
+    results['stochastic_basic'] = np.array([
+        count_per_second(time_mat, detect_mat)
+        for time_mat,detect_mat in 
+        zip(simul_time_vec, simul_detect_vec)]).flatten()
+    
+    if mean_tau is not None:
+        results['stochastic_const_tau'] = np.array([
+            count_per_second_const_dead_time(time_mat, detect_mat, mean_tau)
+            for time_mat, detect_mat in 
+            zip(simul_time_vec, simul_detect_vec)]).flatten()
+    
+    # Calculate Euler-Maruyama count rates
+    if em_detect_vec is not None:
+        print("Calculating Euler-Maruyama count rates (without dead time)")
+        results['em_basic'] = np.array([
+            em_detect_vec[j][-1] / simul_time_vec[j][:,-1].item()
+            for j in range(len(simul_time_vec))
+            ])
+    
+    if em_const_detect_vec is not None:
+        print("Calculating Euler-Maruyama count rates (with constant dead time)")
+        results['em_const_tau'] = np.array([
+            em_const_detect_vec[j][-1] / simul_time_vec[j][:,-1].item()
+            for j in range(len(simul_time_vec))
+            ])
+    
+    if em_exp_detect_vec is not None:
+        print("Calculating Euler-Maruyama count rates (with exponential dead time)")
+        results['em_exp_tau'] = np.array([
+            em_exp_detect_vec[j][-1] / simul_time_vec[j][:,-1].item()
+            for j in range(len(simul_time_vec))
+            ])
+    
+    # Calculate theoretical approximation
+    if mean_tau is not None and 'stochastic_basis' in results:
+        print("Calculating theoretical approximation...")
+        results['theoretical_approx'] = results['stochastic_basic'] * \
+            np.exp(-results['stochastic_basic'] * mean_tau)
+    
+    
+    return results
+
+
 # =============================================================================
 # STOCHASTIC SIMULATION FUNCTIONS
 # =============================================================================
@@ -419,12 +519,12 @@ def pop_dyn_mat(p_v: np.ndarray,
 def _update_population_for_event(current_population, event_type, p_v):
     "Update population based on the type of event that occurred."
     
-    if event_type == 0:
+    if event_type == 0: # Source
         return current_population + 1
-    elif event_type == 1:
+    elif event_type == 1: # Fission
         particles_produced = rng.choice(len(p_v), p = p_v)
         return current_population + particles_produced - 1
-    elif event_type == 2 or event_type == 3:
+    elif event_type == 2 or event_type == 3: # absorption or detection
         return current_population - 1
     else:
         raise ValueError(f"Unknown event type: {event_type}")
@@ -1656,108 +1756,6 @@ def execute_simulations(run_stochastic=False, run_em=False,
             em_const_detect_vec, em_const_pop_vec)
 
 # =============================================================================
-# COUNT RATES FUNCTIONS
-# =============================================================================
-
-def calculate_all_count_rates(simul_time_vec, simul_detect_vec, em_detect_vec = None,
-                              em_const_detect_vec = None, em_exp_detect_vec = None,
-                              mean_tau = None):
-    """
-   Calculate all types of count rates in one organized function.
-   
-   Parameters
-   ----------
-   simul_time_vec : list
-       List of time matrices
-   simul_detect_vec : list
-       List of detection matrices
-   em_detect_vec : list, optional
-       List of Euler-Maruyama detection arrays (without dead time)
-   em_const_detect_vec : list, optional
-       List of Euler-Maruyama detection arrays (with constant dead time)
-   mean_tau : float, optional
-       Mean dead time for calculations
-
-       
-   Returns
-   -------
-   dict
-       Dictionary containing all calculated count rates with the following keys:
-           
-           - 'stochastic_basic': np.ndarray
-           Count rates from stochastic simulation without dead time effects.
-           Shape: (num_fission_values * num_trajectories,)
-           Values: Counts per second (float)
-           
-       - 'stochastic_const_tau': np.ndarray (if mean_tau provided)
-           Count rates from stochastic simulation with constant dead time.
-           Shape: (num_fission_values * num_trajectories,)
-           Values: Counts per second (float)
-           
-       - 'em_basic': np.ndarray (if em_detect_vec provided)
-           Count rates from Euler-Maruyama simulation without dead time.
-           Shape: (num_fission_values,)
-           Values: Counts per second (float)
-           
-       - 'em_const_tau': np.ndarray (if em_const_detect_vec provided)
-           Count rates from Euler-Maruyama simulation with constant dead time.
-           Shape: (num_fission_values,)
-           Values: Counts per second (float)
-           
-       - 'theoretical_approx': np.ndarray 
-           (if mean_tau provided and stochastic_basic exists)
-           Theoretical approximation using exponential dead time correction.
-           Shape: (num_fission_values * num_trajectories,)
-           Values: Counts per second (float)
-   """
-    
-    results = {}
-    
-    # Calculate stochastic count rates
-    print("Calculating stochastic count rates")
-    results['stochastic_basic'] = np.array([
-        count_per_second(time_mat, detect_mat)
-        for time_mat,detect_mat in 
-        zip(simul_time_vec, simul_detect_vec)]).flatten()
-    
-    if mean_tau is not None:
-        results['stochastic_const_tau'] = np.array([
-            count_per_second_const_dead_time(time_mat, detect_mat, mean_tau)
-            for time_mat, detect_mat in 
-            zip(simul_time_vec, simul_detect_vec)]).flatten()
-    
-    # Calculate Euler-Maruyama count rates
-    if em_detect_vec is not None:
-        print("Calculating Euler-Maruyama count rates (without dead time)")
-        results['em_basic'] = np.array([
-            em_detect_vec[j][-1] / simul_time_vec[j][:,-1].item()
-            for j in range(len(simul_time_vec))
-            ])
-    
-    if em_const_detect_vec is not None:
-        print("Calculating Euler-Maruyama count rates (with constant dead time)")
-        results['em_const_tau'] = np.array([
-            em_const_detect_vec[j][-1] / simul_time_vec[j][:,-1].item()
-            for j in range(len(simul_time_vec))
-            ])
-    
-    if em_exp_detect_vec is not None:
-        print("Calculating Euler-Maruyama count rates (with exponential dead time)")
-        results['em_exp_tau'] = np.array([
-            em_exp_detect_vec[j][-1] / simul_time_vec[j][:,-1].item()
-            for j in range(len(simul_time_vec))
-            ])
-    
-    # Calculate theoretical approximation
-    if mean_tau is not None and 'stochastic_basis' in results:
-        print("Calculating theoretical approximation...")
-        results['theoretical_approx'] = results['stochastic_basic'] * \
-            np.exp(-results['stochastic_basic'] * mean_tau)
-    
-    
-    return results
-
-# =============================================================================
 # PLOTTING FUNCTIONS
 # =============================================================================
 
@@ -1842,207 +1840,7 @@ def plot_euler_maruyama_exp_dead_time(alpha_inv_vec, cps_em_tau, tau):
     plt.tight_layout()
     
     return plt.gcf() 
-
-
-'''possibly for later use?'''
-
-class SimulationConfig:
-    "Configuration class for simulation parameters"
-    
-    def __init__(self):
-        # Physical parameters
-        self.p_v = [1 / 6, 1 / 3, 1 / 3, 1 / 6]     # Fission probability distribution
-        self.absorb = 7.0       # Absorption rate
-        self.source = 1000.0    # Source rate
-        self.detect = 10.0      # Detection rate
-        
-        # Time parameters
-        self.t_0 = 0.0
-        self.t_end = 0.1
-        self.steps = 100_000_000
-        self.grid_points = 100_000_000
-        
-        # Dead time parameters
-        self.mean_tau = 1e-6
-        self.tau_distribution = 'normal'
-        
-        self.fission_vec = np.array([33.94, 33.95, 33.96, 33.965,
-                                     33.97, 33.975, 33.98, 33.982, 
-                                     33.984, 33.986, 33.988, 33.99, 33.992])
-        self.vbar = mean(self.p_v)
-        self.lam_vec = self.fission_vec + self.absorb + self.detect
-        self.alpha_vec = self.lam_vec - self.fission_vec * self.vbar
-        self.alpha_inv_vec = 1 / self.alpha_vec
-        self.equil = self.source * self.alpha_inv_vec
-
-
-class SimulationDataManager:
-    
-    def __init__(self, config: SimulationConfig):
-        self.config = config
-        self.fission_vec = config.fission_vec
-        return
-    
-    """
-    def load_simulation_data(self, fission_vec = None, pop = False):
-        if fission_vec is None:
-            fission_vec = self.fission_vec
-        simul_time = {}
-        simul_detect = {}
-        if not pop:
-            simul_pop = {}
-        
-        for f in fission_vec:
-            print(f"Loading data for fission = {f}")
-            simul_time[f] = np.load(f"Simul_Time_Matrix_hunmil_f{f}.npy")
-            simul_detect[f] = np.load(f"Detection_Matrix_hunmil_f{f}.npy")
-            if not pop:
-                simul_pop[f] = np.load(f"Simul_Pop_Matrix_f{f}.npy")
-        
-        simul_time_vec = list(simul_time.values())
-        simul_detect_vec = list(simul_detect.values())
-        if not pop:
-            simul_pop_vec = list(simul_pop.values())
-        return simul_time_vec, simul_detect_vec, simul_pop_vec
-    """
-
-
-class DeadTimeAnalyzer:
-    """ Analyzes count rates with various dead time effects."""
-    
-    def __init(self, config : SimulationConfig):
-        self.config = config
-    
-    def calculate_count_rates(self, simul_time_vec, simul_detect_vec, valid_detects):
-        """Calculate count rates with and without dead time effects."""
-        
-        print("Calculating count rates...")
-        
-        # Calculate basic count rates
-        cps_basic = []
-        for time_mat, detect_mat in zip(simul_time_vec, simul_detect_vec):
-            cps = count_per_second(time_mat, detect_mat)
-            cps_basic.append(cps)
-        
-        # Calculate count rates with random dead time
-        cps_random_tau = []
-        for time_mat, valid_detect in zip(simul_time_vec, valid_detects):
-            cps = count_per_second_rand_dead_time(
-                time_mat, valid_detect, 
-                distribution=self.config.tau_distribution,
-                **self.config.tau_params
-            )
-            cps_random_tau.append(cps)
-        
-        # Calculate count rates with constant dead time
-        cps_constant_tau = []
-        for time_mat, detect_mat in zip(simul_time_vec, simul_detect_vec):
-            cps = count_per_second_const_dead_time(time_mat, detect_mat, self.config.mean_tau)
-            cps_constant_tau.append(cps)
-        
-        return {
-            'basic': np.array(cps_basic),
-            'random_tau': np.array(cps_random_tau),
-            'constant_tau': np.array(cps_constant_tau)
-        }
-    
-    def calculate_approximation(self, cps_basic, alpha_inv_vec, lam_vec):
-        """Calculate theoretical approximation for dead time effects."""
-        approx_vec = cps_basic * np.exp(-cps_basic * self.config.mean_tau)
-        return approx_vec
    
-
-class SimulationVisualizer:
-    """Handles plotting and visualization of simulation results."""
-    
-    def __init__(self, config: SimulationConfig):
-        self.config = config
-        self.setup_plotting_style()
-    
-    def setup_plotting_style(self):
-        """Setup consistent plotting style."""
-        plt.style.use('default')
-        plt.rcParams.update({
-            'figure.figsize': (12, 8),
-            'font.size': 12,
-            'axes.grid': True,
-            'grid.alpha': 0.3,
-            'lines.linewidth': 2,
-            'axes.labelsize': 14,
-            'axes.titlesize': 16,
-            'legend.fontsize': 12
-        })
-    
-    def plot_dead_time_analysis(self, alpha_inv_vec, cps_results, approx_vec, fission_vec):
-        """Create comprehensive dead time analysis plot."""
-        
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-        
-        # Main plot
-        ax1.plot(alpha_inv_vec, cps_results['constant_tau'], 
-                'o-', label='Constant dead time', color='blue', markersize=6)
-        ax1.plot(alpha_inv_vec, cps_results['random_tau'], 
-                's-', label='Random dead time', color='red', markersize=6)
-        ax1.plot(alpha_inv_vec, approx_vec, 
-                '^-', label='Theoretical approximation', color='green', markersize=6)
-        
-        ax1.set_xlabel('1/α (inverse Rossi-alpha)')
-        ax1.set_ylabel('Counts per Second (CPS)')
-        ax1.set_title('Dead Time Effects on Count Rate')
-        ax1.legend()
-        ax1.grid(True, alpha=0.3)
-        
-        # Rotate x-axis labels for better readability
-        ax1.tick_params(axis='x', rotation=45)
-        
-        # Residual plot
-        residuals = cps_results['constant_tau'] - approx_vec
-        ax2.plot(alpha_inv_vec, residuals, 'o-', color='purple', markersize=6)
-        ax2.axhline(y=0, color='black', linestyle='--', alpha=0.5)
-        ax2.set_xlabel('1/α (inverse Rossi-alpha)')
-        ax2.set_ylabel('Residual (Observed - Theoretical)')
-        ax2.set_title('Residual Analysis')
-        ax2.grid(True, alpha=0.3)
-        ax2.tick_params(axis='x', rotation=45)
-        
-        plt.tight_layout()
-        
-        # Add comprehensive title
-        fig.suptitle(
-            f'Dead Time Analysis: τ={self.config.mean_tau:.1e}s, '
-            f'Distribution={self.config.tau_distribution}',
-            fontsize=16, y=1.02
-        )
-        
-        if self.config.save_results:
-            plt.savefig(f'dead_time_analysis_{self.config.tau_distribution}.png', 
-                       dpi=300, bbox_inches='tight')
-        
-        plt.show()
-    
-    def plot_population_dynamics(self, time_mat, pop_mat, num_trajectories=10):
-        """Plot population dynamics for selected trajectories."""
-        
-        fig, ax = plt.subplots(figsize=(12, 8))
-        
-        # Plot subset of trajectories
-        num_to_plot = min(num_trajectories, len(time_mat))
-        for i in range(num_to_plot):
-            ax.plot(time_mat[i, :], pop_mat[i, :], alpha=0.3, linewidth=0.5)
-        
-        # Plot mean trajectory
-        mean_pop = np.mean(pop_mat, axis=0)
-        ax.plot(time_mat[0, :], mean_pop, 'r-', linewidth=2, label='Mean Population')
-        
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Population')
-        ax.set_title('Population Dynamics')
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        plt.show()
-
 
 #implementation of code
 
@@ -2089,10 +1887,10 @@ fission_vec = np.round(fission_vec , decimals = 4)
 
 simul_time_vec, simul_detect_vec = load_simulation_data(fission_vec)
 
-run_euler_maruyama_simulations(
-    fission_vec, simul_time_vec, p_v, absorb, source, detect, t_0, grid_points, mean_tau,
-    run_without_dead_time = False, run_with_const_dead_time = False, 
-    run_with_exp_dead_time = True)
+#run_euler_maruyama_simulations(
+#    fission_vec, simul_time_vec, p_v, absorb, source, detect, t_0, grid_points, mean_tau,
+#    run_without_dead_time = False, run_with_const_dead_time = False, 
+#    run_with_exp_dead_time = True)
 
 #em_detect_vec, em_pop_vec = load_euler_maruyama_basic(fission_vec)
 
@@ -2102,14 +1900,12 @@ em_const_detect_vec, em_const_pop_vec = (
 em_exp_detect_vec, em_exp_pop_vec = (
    load_euler_maruyama_with_exp_dead_time_data(fission_vec))
 
-#valid_detects = [detect_mat[~np.isnan(detect_mat)] for detect_mat in simul_detect_vec]
-
 # Calculate all count rates
 count_rates = calculate_all_count_rates(simul_time_vec, simul_detect_vec, mean_tau = mean_tau,
-                                        em_exp_detect_vec = em_exp_detect_vec)
+                                        em_const_detect_vec = em_const_detect_vec)
 
 plot_stochastic_const_dead_time(alpha_inv_vec, count_rates['stochastic_const_tau'], mean_tau)
-plot_euler_maruyama_exp_dead_time(alpha_inv_vec, count_rates['em_exp_tau'], mean_tau);
+plot_euler_maruyama_const_dead_time(alpha_inv_vec, count_rates['em_const_tau'], mean_tau);
 plt.show()
 
 
