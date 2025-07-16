@@ -125,23 +125,6 @@ This project provides a nuclear reactor stochastic simulation with the following
 
 
 
-## Project Structure
-
-├── config.py # Configuration management and parameters
-├── data_management.py # Data loading, saving, and organization
-├── count_rates.py # Count rate calculations and dead time effects
-├── plot_simulations.py # Visualization and plotting functions
-├── main.py # Main execution script and testing
-├── simulation_runner.py # Simulation execution and orchestration
-├── euler_maruyama_methods.py # Euler-Maruyama simulation methods
-├── taylor_methods.py # Taylor series expansion methods
-├── legacy_simulations.py # DEPRECATED: Original single-file implementation
-├── README.md # Project documentation
-├── ROADMAP.md # Development roadmap and planning
-└── LICENSE # Project license
-
-
-
 
 
 
