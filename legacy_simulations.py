@@ -1,7 +1,62 @@
 """ Written by Tomer279 with the assistance of Cursor.ai """
 
+"""
+LEGACY SIMULATION FILE - DEPRECATED
+
+This file contains the original implementation of nuclear reactor simulations
+with all functions in a single file. This approach has been replaced by a
+modular structure with separate files for different functionalities.
+
+CURRENT MODULAR STRUCTURE:
+- config.py: Configuration management and parameters
+- data_management.py: Data loading, saving, and organization
+- count_rates.py: Count rate calculations and dead time effects
+- plot_simulations.py: Visualization and plotting functions
+- simulation_runner.py: Simulation execution and orchestration
+- euler_maruyama_methods.py: Euler-Maruyama simulation methods
+- taylor_methods.py: Taylor series expansion methods
+
+DEPRECATED FUNCTIONS IN THIS FILE:
+- Stochastic simulation functions → simulation_runner.py
+- Euler-Maruyama simulation functions → euler_maruyama_methods.py
+- Taylor method simulation functions → taylor_methods.py
+- Data loading/saving functions → data_management.py
+- Plotting and visualization functions → plot_simulations.py
+- Count rate calculations → count_rates.py
+- Configuration and parameter management → config.py
+
+SIMULATION METHODS INCLUDED:
+- Stochastic simulations
+- Euler-Maruyama method (with/without dead time)
+- Taylor series expansion methods
+- Population dynamics calculations
+- Detection and count rate analysis
+- Dead time effects (basic, constant, exponential)
+
+This file is kept for reference and historical purposes only.
+DO NOT USE FOR NEW DEVELOPMENT.
+"""
+
 # =============================================================================
-# IMPORTS AND GLOBAL SETTINGS
+# DEPRECATED: This file is no longer used in the current project structure
+# =============================================================================
+# 
+# The functions in this file have been reorganized into separate modules:
+# 
+# SIMULATION METHODS:
+# - Stochastic simulations → simulation_runner.py
+# - Euler-Maruyama methods → euler_maruyama_methods.py
+# - Taylor series methods → taylor_methods.py
+#
+# DATA MANAGEMENT:
+# - Data loading/saving → data_management.py
+# - Configuration → config.py
+#
+# ANALYSIS & VISUALIZATION:
+# - Count rate calculations → count_rates.py
+# - Plotting functions → plot_simulations.py
+#
+# Please use the new modular structure instead of this legacy file.
 # =============================================================================
 
 import math
