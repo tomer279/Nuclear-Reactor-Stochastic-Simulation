@@ -147,40 +147,6 @@ cython_debug/
 .vscode/
 *.code-workspace
 
-# Data files (large simulation outputs)
-data/stochastic/population_matrices/*/
-data/stochastic/time_matrices/*/
-data/stochastic/detection_matrices/*/
-data/euler_maruyama/population_matrices/*/
-data/euler_maruyama/time_matrices/*/
-data/euler_maruyama/detection_matrices/*/
-data/analysis/count_rates/*/
-data/analysis/processed_data/*/
-
-# Keep data folder structure but ignore large files
-!data/
-!data/*/
-!data/*/*/
-!data/*/*/*/
-
-# Large data files in root directory
-*.npy
-*.npz
-*.h5
-*.hdf5
-*.mat
-
-# Plot outputs (keep small ones, ignore large ones)
-*.png
-*.jpg
-*.jpeg
-*.pdf
-*.svg
-
-# Keep small plots for documentation
-!README_*.png
-!docs/*.png
-!examples/*.png
 
 # Temporary files
 *.tmp
