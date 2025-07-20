@@ -9,21 +9,20 @@ in nuclear reactors using matrix-based approaches for multiple trajectories.
 
 import numpy as np
 from data_management import DataManager
-from typing import Optional
 
 rng = np.random.default_rng()
 
 
 def pop_dyn_mat(p_v: np.ndarray,
-                f: float,
-                a: float,
-                s: float,
-                d: float,
+                fission: float,
+                absorb: float,
+                source: float,
+                detect: float,
                 n_0: np.ndarray,
                 t_0: float,
                 steps: int,
-                index: str,
-                data_manager: Optional[DataManager] = None) -> tuple[np.ndarray, np.ndarray]:
+                prefix: str,
+                data_manager: DataManager) -> tuple[np.ndarray, np.ndarray]:
     """
     Simulates population dynamics in matrix form with multiple initial conditions.
     
@@ -75,7 +74,7 @@ def pop_dyn_mat(p_v: np.ndarray,
         raise ValueError("steps must be positive")
     if t_0 < 0:
         raise ValueError("initial time must be non-negative")
-    if any(x < 0 for x in [f, a, s, d]):
+    if any(x < 0 for x in [fission, absorb, source, detect]):
         raise ValueError("rate constants must be non-negative")
         
         
@@ -101,21 +100,16 @@ def pop_dyn_mat(p_v: np.ndarray,
             print(f"Processing trajectory {i + 1}/{k}")
         _simulate_single_trajectory(i, num_steps, pop_mat,
                                     time_mat, event_mat, detect_mat, p_v,
-                                    f, a, s, d)
+                                    fission, absorb, source, detect)
     
     # Post-process detect_mat to remove np.nan values
     clean_detect_mat = _clean_detection_matrix(detect_mat)
     
-    # Save results using data manager if provided
-    if data_manager is not None:
-        data_manager.save_stochastic_data(pop_mat, time_mat, clean_detect_mat,
-                                          float(index.replace('f', '')),'f')
-    
-    else:
-        # Legacy saving
-        np.save(f'Simul_Pop_Matrix_{index}', pop_mat)
-        np.save(f'Simul_Time_Matrix_{index}', time_mat)
-        np.save(f'Detection_Matrix_{index}', clean_detect_mat)
+    # Save results using data manager
+    # Extract prefix from index (e.g., 'mil_f33.94' -> 'mil_f')
+    save_prefix = prefix.split(str(fission))[0] # Split on fission value and take first port
+    data_manager.save_stochastic_data(pop_mat, time_mat, clean_detect_mat,
+                                      fission, prefix = save_prefix)
     
     return time_mat, pop_mat, clean_detect_mat
 
@@ -136,7 +130,7 @@ def _update_population_for_event(current_population, event_type, p_v):
 
 def _simulate_single_trajectory(
         trajectory_index, num_steps, pop_mat, time_mat, event_mat, detect_mat,
-        p_v, f, a, s, d):
+        p_v, fission, absorb, source, detect):
     "Simulate a single trajectory"
     next_percent = 10
     
@@ -151,7 +145,7 @@ def _simulate_single_trajectory(
         current_time = time_mat[i, j]
             
         # Calculate total rate and probabilities
-        total_rate = (f + a + d) * current_pop + s
+        total_rate = (fission + absorb + detect) * current_pop + source
             
         if total_rate <= 0:
             # System is static
@@ -163,10 +157,10 @@ def _simulate_single_trajectory(
             
             # Calculate event probabilities
         event_probs = np.array([
-            s / total_rate,                 # source
-            current_pop * f / total_rate,   # fission
-            current_pop * a / total_rate,   # absorption
-            current_pop * d / total_rate    # detection
+            source / total_rate,                 # source
+            current_pop * fission / total_rate,   # fission
+            current_pop * absorb / total_rate,   # absorption
+            current_pop * detect / total_rate    # detection
         ])
         
         # Generate event and time increment

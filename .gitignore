@@ -6,6 +6,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
 
 # Distribution / packaging
@@ -22,7 +24,6 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -50,6 +51,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+cover/
 
 # Translations
 *.mo
@@ -72,6 +74,7 @@ instance/
 docs/_build/
 
 # PyBuilder
+.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -81,11 +84,15 @@ target/
 profile_default/
 ipython_config.py
 
-# pyenv
-.python-version
-
 # pipenv
-Pipfile.lock
+#Pipfile.lock
+
+# poetry
+#poetry.lock
+
+# pdm
+#pdm.lock
+.pdm.toml
 
 # PEP 582
 __pypackages__/
@@ -124,13 +131,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# =============================================================================
-# IDE AND EDITORS
-# =============================================================================
+# pytype static type analyzer
+.pytype/
 
-# Visual Studio Code
-.vscode/
-*.code-workspace
+# Cython debug symbols
+cython_debug/
 
 # PyCharm
 .idea/
@@ -138,165 +143,72 @@ dmypy.json
 *.ipr
 *.iws
 
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
+# VS Code
+.vscode/
+*.code-workspace
 
-# Vim
-*.swp
-*.swo
-*~
+# Data files (large simulation outputs)
+data/stochastic/population_matrices/*/
+data/stochastic/time_matrices/*/
+data/stochastic/detection_matrices/*/
+data/euler_maruyama/population_matrices/*/
+data/euler_maruyama/time_matrices/*/
+data/euler_maruyama/detection_matrices/*/
+data/analysis/count_rates/*/
+data/analysis/processed_data/*/
 
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
+# Keep data folder structure but ignore large files
+!data/
+!data/*/
+!data/*/*/
+!data/*/*/*/
 
-# =============================================================================
-# OPERATING SYSTEMS
-# =============================================================================
+# Large data files in root directory
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.mat
 
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.tmp
-*.temp
-Desktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-# Linux
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
-# =============================================================================
-# PROJECT SPECIFIC
-# =============================================================================
-
-# Large data files (handled by Git LFS)
-# Note: .npy files are tracked by Git LFS, so we don't ignore them here
-
-# Output and temporary files
-outputs/
-temp/
-tmp/
-*.tmp
-*.temp
-
-# Plot and image files (unless you want to keep them)
-plots/
+# Plot outputs (keep small ones, ignore large ones)
 *.png
 *.jpg
 *.jpeg
-*.gif
-*.bmp
-*.tiff
-*.svg
 *.pdf
-*.eps
+*.svg
 
-# Log files
-*.log
-logs/
-log/
-
-# Backup files
-*.bak
-*.backup
-*~
-
-# Configuration files with sensitive data
-config_local.py
-secrets.py
-.env.local
-
-# Data files that shouldn't be version controlled
-# (Keep example data, ignore large datasets)
-data/raw/
-data/temp/
-data/backup/
-
-# Keep example data
-!data/example/
-!*.npy.example
-!data/example/**/*.npy
-
-# =============================================================================
-# SIMULATION SPECIFIC
-# =============================================================================
-
-# Large simulation outputs (if not using LFS)
-# simulation_outputs/
-# results/
-
-# Temporary simulation files
-*.sim
-*.sim_temp
-
-# =============================================================================
-# DOCUMENTATION
-# =============================================================================
-
-# Documentation builds
-docs/build/
-docs/_build/
-
-# =============================================================================
-# MISC
-# =============================================================================
+# Keep small plots for documentation
+!README_*.png
+!docs/*.png
+!examples/*.png
 
 # Temporary files
 *.tmp
 *.temp
 *.swp
 *.swo
+*~
 
-# Archive files
-*.zip
-*.tar.gz
-*.rar
-*.7z
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
+# Backup files
+*.bak
+*.backup
+*.old
 
-# Compiled files
-*.pyc
-*.pyo
-*.pyd
+# Log files
+*.log
+logs/
+
+# Configuration files with sensitive data
+config_local.py
+secrets.py
+.env.local
+.env.production

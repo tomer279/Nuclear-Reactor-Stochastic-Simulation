@@ -11,6 +11,17 @@ This project implements stochastic and Euler-Maruyama simulations for nuclear re
 - **Taylor Methods**: Strong and weak Taylor schemes for improved accuracy
 - **Visualization tools**: Plotting population dynamics and CPS comparisons
 
+## Quick Start
+``` python
+python main.py
+```
+
+## Configuration
+Edit `config.py` to modify simulation parameters.
+
+## Output
+Results are saved in `data/` directory.
+
 ## Future Development
 
 This project is actively being developed. See [ROADMAP.md](ROADMAP.md) for planned improvements.

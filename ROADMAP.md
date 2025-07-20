@@ -17,7 +17,7 @@ This project provides a nuclear reactor stochastic simulation with the following
 - **NEW**: Population dynamics plotting functions
 - **NEW**: Relative difference analysis in CPS comparisons
 
-### 🔧 Functions Ready for Production
+### Functions Ready for Production
 - `count_per_second()` - Count rate calculations
 - `euler_maruyama_system_basic()` - Basic SDE solver
 - `euler_maruyama_system_with_const_dead_time()` - Constant dead time
@@ -79,6 +79,12 @@ This project provides a nuclear reactor stochastic simulation with the following
   - Scripts to regenerate datasets from parameters
   - Example data generation for new users
   - Data validation and integrity checks
+
+### User Interface
+  - Command-line argument parsing
+  - Visual configuration editor
+  - Real-time simulation monitoring
+
 
 
 ## Known Issues

@@ -251,11 +251,15 @@ def euler_maruyama_system_basic(p_v: np.ndarray,
         # optional: Ensure non-negativity
         # pop[i + 1] = max(0,pop[i + 1])
     
+    # Extract prefix from index (e.g., 'mil_f33.94' -> 'mil_f')
+    save_prefix = index.split(str(f))[0]
+    
     data_manager.save_euler_maruyama_data(
         pop_data = pop,
         detect_data = detect, 
-        fission_value = float(index),
-        dead_time_type = 'basic'
+        fission_value = f,
+        dead_time_type = 'basic',
+        prefix = save_prefix
     )
     
     return t_space, pop, detect
@@ -406,12 +410,16 @@ def euler_maruyama_system_with_const_dead_time(p_v: np.ndarray,
         
         # optional: Ensure non-negativity
         # pop[i + 1] = max(0,pop[i + 1])
-        
+    
+    # Extract prefix from indes (e.g., 'mil_f33.94' -> 'mil_f')
+    save_prefix = index.split(str(f))[0] # Split on fission value and take first part
+    
     data_manager.save_euler_maruyama_data(
         pop_data = pop,
         detect_data = detect,
-        fission_value = float(index),
-        dead_time_type = 'const'
+        fission_value = f,
+        dead_time_type = 'const',
+        prefix = save_prefix
     )
     return t_space, pop, detect
 
@@ -597,12 +605,16 @@ def euler_maruyama_system_with_exp_dead_time(p_v: np.ndarray,
         
         # optional: Ensure non-negativity
         # pop[i + 1] = max(0,pop[i + 1])
+    
+    # Extract prefix from index (e.g., 'mil_f33.94' -> 'mil_f')
+    save_prefix = index.split(str(f))[0]
         
     data_manager.save_euler_maruyama_data(
         pop_data = pop,
         detect_data = detect,
-        fission_value = float(index),
-        dead_time_type = 'exp'
+        fission_value = f,
+        dead_time_type = 'exp',
+        prefix = save_prefix
     )
     return t_space, pop, detect
 
@@ -637,3 +649,6 @@ def euler_maruyama_matrix(p_v, f, a, s, d, n_0, t_0, t_end, grid_points, paths):
         t_mat = np.append(t_mat, [ts], axis = 0)
         print(i)
     return t_mat, n_mat
+
+    
+    

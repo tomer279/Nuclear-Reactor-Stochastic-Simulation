@@ -75,17 +75,17 @@ class DataManager:
         # Save population matrix
         pop_path = self.base_dir / 'stochastic' / 'population_matrices' / fission_dir
         pop_path.mkdir(exist_ok=True)
-        np.save(pop_path / f'Simul_Pop_Matrix_{fission_value}.npy', pop_mat)
+        np.save(pop_path / f'Simul_Pop_Matrix_{prefix}{fission_value}.npy', pop_mat)
         
         # Save time matrix
         time_path = self.base_dir / 'stochastic' / 'time_matrices' / fission_dir
         time_path.mkdir(exist_ok=True)
-        np.save(time_path / f'Simul_Time_Matrix_{fission_value}.npy', time_mat)
+        np.save(time_path / f'Simul_Time_Matrix_{prefix}{fission_value}.npy', time_mat)
         
         # Save detection matrix
         detect_path = self.base_dir / 'stochastic' / 'detection_matrices' / fission_dir
         detect_path.mkdir(exist_ok=True)
-        np.save(detect_path / f'Detection_Matrix_{fission_value}.npy', detect_mat)
+        np.save(detect_path / f'Detection_Matrix_{prefix}{fission_value}.npy', detect_mat)
         
         print(f"Stochastic data saved for fission = {fission_value}")
     
@@ -114,12 +114,12 @@ class DataManager:
         # Save population data
         pop_path = self.base_dir / 'euler_maruyama' / 'population_matrices' / fission_dir
         pop_path.mkdir(exist_ok=True)
-        np.save(pop_path / f'EM_Pop_{dead_time_type}_Dead_Time_f{fission_value}.npy', pop_data)
+        np.save(pop_path / f'EM_Pop_{dead_time_type}_Dead_Time_{prefix}{fission_value}.npy', pop_data)
         
         # Save detection data
         detect_path = self.base_dir / 'euler_maruyama' / 'detection_matrices' / fission_dir
         detect_path.mkdir(exist_ok=True)
-        np.save(detect_path / f'EM_Detect_{dead_time_type}_Dead_Time_f{fission_value}.npy', detect_data)
+        np.save(detect_path / f'EM_Detect_{dead_time_type}_Dead_Time_{prefix}{fission_value}.npy', detect_data)
         
         print(f"Euler-Maruyama data saved for fission = {fission_value}, type = {dead_time_type}")
     
@@ -183,17 +183,23 @@ class DataManager:
             fission_dir = f"{prefix}{fission}"
             
             # Load population matrix
-            pop_path = self.base_dir / 'stochastic' / 'population_matrices' / fission_dir / f'Simul_Pop_Matrix_{prefix}{fission}.npy'
+            pop_path = (self.base_dir / 'stochastic' /
+                        'population_matrices' / fission_dir / 
+                        f'Simul_Pop_Matrix_{prefix}{fission}.npy')
             if pop_path.exists():
                 pop_matrices.append(np.load(pop_path))
             
             # Load time matrix
-            time_path = self.base_dir / 'stochastic' / 'time_matrices' / fission_dir / f'Simul_Time_Matrix_{prefix}{fission}.npy'
+            time_path = (self.base_dir / 'stochastic' /
+                         'time_matrices' / fission_dir /
+                         f'Simul_Time_Matrix_{prefix}{fission}.npy')
             if time_path.exists():
                 time_matrices.append(np.load(time_path))
             
             # Load detection matrix
-            detect_path = self.base_dir / 'stochastic' / 'detection_matrices' / fission_dir / f'Detection_Matrix_{prefix}{fission}.npy'
+            detect_path = (self.base_dir / 'stochastic' / 
+                           'detection_matrices' / fission_dir / 
+                           f'Detection_Matrix_{prefix}{fission}.npy')
             if detect_path.exists():
                 detect_matrices.append(np.load(detect_path))
             
@@ -228,12 +234,16 @@ class DataManager:
             fission_dir = f"{prefix}{fission}"
             
             # Load population data
-            pop_path = self.base_dir / 'euler_maruyama' / 'population_matrices' / fission_dir / f'EM_Pop_{dead_time_type}_Dead_Time_f{fission}.npy'
+            pop_path = (self.base_dir / 'euler_maruyama' /
+                        'population_matrices' / fission_dir /
+                        f'EM_Pop_{dead_time_type}_Dead_Time_{prefix}{fission}.npy')
             if pop_path.exists():
                 pop_matrices.append(np.load(pop_path))
             
             # Load detection data
-            detect_path = self.base_dir / 'euler_maruyama' / 'detection_matrices' / fission_dir / f'EM_Detect_{dead_time_type}_Dead_Time_f{fission}.npy'
+            detect_path = (self.base_dir / 'euler_maruyama' / 
+                           'detection_matrices' / fission_dir 
+                           / f'EM_Detect_{dead_time_type}_Dead_Time_{prefix}{fission}.npy')
             if detect_path.exists():
                 detect_matrices.append(np.load(detect_path))
             
@@ -287,34 +297,6 @@ class DataManager:
     def load_euler_maruyama_with_exp_dead_time_data(self, fission_vec, prefix='f'):
         """Compatibility function for loading Euler-Maruyama exp dead time data."""
         return self.load_euler_maruyama_data(fission_vec, 'exp', prefix)
-
-    
-    
-# Convenience functions for backward compatibility
-def save_simulation_data(pop_mat, time_mat, detect_mat, fission_value, prefix='f'):
-    """Legacy function for saving simulation data."""
-    dm = DataManager()
-    dm.save_stochastic_data(pop_mat, time_mat, detect_mat, fission_value, prefix)
-
-def load_simulation_data(fission_vec, prefix='f'):
-    """Legacy function for loading simulation data from root directory."""
-    dm = DataManager()
-    return dm.load_simulation_data_legacy(fission_vec, prefix)
-
-def load_euler_maruyama_basic(fission_vec, prefix='f'):
-    """Legacy function for loading Euler-Maruyama basic data from root directory."""
-    dm = DataManager()
-    return dm.load_euler_maruyama_data_legacy(fission_vec, 'basic', prefix)
-
-def load_euler_maruyama_with_const_dead_time_data(fission_vec, prefix='f'):
-    """Legacy function for loading Euler-Maruyama const dead time data from root directory."""
-    dm = DataManager()
-    return dm.load_euler_maruyama_data_legacy(fission_vec, 'const', prefix)
-
-def load_euler_maruyama_with_exp_dead_time_data(fission_vec, prefix='f'):
-    """Legacy function for loading Euler-Maruyama exp dead time data from root directory."""
-    dm = DataManager()
-    return dm.load_euler_maruyama_data_legacy(fission_vec, 'exp', prefix)
 
 
 

@@ -15,12 +15,7 @@ from euler_maruyama_methods import (
     euler_maruyama_system_with_exp_dead_time
 )
 # from count_rates import calculate_all_count_rates
-from data_management import (
-    load_simulation_data,
-    load_euler_maruyama_basic,
-    load_euler_maruyama_with_const_dead_time_data,
-    load_euler_maruyama_with_exp_dead_time_data
-)
+import data_management as dm
 
 from config import SimulationConfig
 
@@ -37,15 +32,19 @@ def run_stochastic_simulations(fission_vec, equil, p_v, absorb, source, detect, 
     """
     Run stochastic simulations for all fission values and save results.
     """
+    
     print("=" * 60)
     print("RUNNING STOCHASTIC SIMULATIONS")
     print("=" * 60)
     
+    data_manager = dm.DataManager()
+    
     for i, fission in enumerate(fission_vec):
         print(f"iteration {i + 1}/{len(fission_vec)}, fission = {fission}")
         n_0 = equil[i] * np.ones(1)
+        index = f"{prefix}{fission}"
         pop_dyn_mat(p_v, fission, absorb, source, detect, n_0, t_0, steps, 
-                   prefix + f"{fission}")
+                   index, data_manager = data_manager)
     
     print("Stochastic simulations complete!")
 
@@ -69,21 +68,21 @@ def run_euler_maruyama_simulations(fission_vec, simul_time_vec, p_v, absorb, sou
         if run_without_dead_time:
             euler_maruyama_system_basic(
                 p_v, fission, absorb, source, detect, t_0, t_end, 
-                grid_points, f"{fission}"
+                grid_points, f"{prefix}{fission}"
                 )
         
         # With constant dead time
         if run_with_const_dead_time:
             euler_maruyama_system_with_const_dead_time(
                 p_v, fission, absorb, source, detect, mean_tau, t_0, t_end, 
-                grid_points, f"{fission}"
+                grid_points, f"{prefix}{fission}"
                 )
         
         # with exponential dead time
         if run_with_exp_dead_time:
             euler_maruyama_system_with_exp_dead_time(
                 p_v, fission, absorb, source, detect, mean_tau, t_0, t_end, 
-                grid_points, f"{fission}"
+                grid_points, f"{prefix}{fission}"
                 )
             
     print("Euler-Maruyama simulations complete!")
@@ -133,13 +132,13 @@ def execute_simulations(config: SimulationConfig, run_stochastic = False,
         run_stochastic_simulations(fission_vec, equil, p_v, absorb, source, detect, t_0, steps)
     
     # Always load data (either existing or newly created)
-    simul_time_vec, simul_detect_vec = load_simulation_data(fission_vec)
+    simul_time_vec, simul_detect_vec = dm.load_simulation_data(fission_vec)
     em_detect_vec, em_pop_vec = (
-        load_euler_maruyama_basic(fission_vec))
+        dm.load_euler_maruyama_basic(fission_vec))
     em_const_detect_vec, em_const_pop_vec = (
-        load_euler_maruyama_with_const_dead_time_data(fission_vec))
+        dm.load_euler_maruyama_with_const_dead_time_data(fission_vec))
     em_exp_detect_vec, em_exp_pop_vec = (
-        load_euler_maruyama_with_exp_dead_time_data(fission_vec))
+        dm.load_euler_maruyama_with_exp_dead_time_data(fission_vec))
     
     if run_em:
         print("Running Euler-Maruyama simulations...")
