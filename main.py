@@ -84,7 +84,7 @@ import plot_simulations as ps
 # SIMULATION CONTROL FLAGS - MODIFY THESE TO CONTROL SIMULATIONS
 # =============================================================================
 # Set these flags to control which simulations run
-run_stochastic = False      # Run direct stochastic simulations
+run_stochastic = True      # Run direct stochastic simulations
 run_euler_maruyama = True  # Run Euler-Maruyama method simulations  
 run_taylor = True         # Run Taylor method simulations
 
