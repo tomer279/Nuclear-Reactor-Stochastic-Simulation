@@ -29,7 +29,9 @@ A web-based dashboard is available for interactive simulation and analysis:
 - Compare theoretical vs simulated results
 - Interactive visualization of population dynamics
 
-Deploy the dashboard using Streamlit Community Cloud or run locally with:
+Deploy the dashboard using Streamlit Community Cloud on:
+[https://nuclear-reactor-stochastic-simulation-dashboard.streamlit.app/](https://nuclear-reactor-stochastic-simulation-dashboard.streamlit.app/)
+or run locally with:
 ```bash
 streamlit run streamlit_app.py
 ```
@@ -40,4 +42,5 @@ This project is actively being developed. See [ROADMAP.md](ROADMAP.md) for plann
 
 ## License
 MIT License - see [LICENSE](LICENSE) for details.
+
 
