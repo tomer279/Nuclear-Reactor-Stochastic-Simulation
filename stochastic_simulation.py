@@ -13,7 +13,6 @@ from data_management import DataManager
 
 rng = np.random.default_rng()
 
-
 def pop_dyn_mat(p_v: np.ndarray,
                 fission: float,
                 absorb: float,

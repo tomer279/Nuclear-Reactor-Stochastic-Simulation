@@ -507,10 +507,9 @@ def euler_maruyama_system_with_uniform_dead_time(p_v: np.ndarray,
         current_detect = float(detect[i])
         
         # Update detection first (independend of population update)
-        detect_increment = (drift_detect(current_pop) * dt 
-                            + diffusion_detect(current_pop) * dW3_vec[i])
+        detect_increment = (drift_detect(current_pop) * dt)
         detect[i + 1] = current_detect + detect_increment
-        
+    
         # Update population (subtract only the increment in detection)
         pop_increment = (drift_pop(current_pop) * dt 
                          + sig_1 * dW1_vec[i] - sig_2 * dW2_vec[i])
@@ -809,7 +808,7 @@ def euler_maruyama_matrix(p_v: np.ndarray,
     n_mat = np.zeros((num_paths,grid_points + 1))
     
     # Get shared time vector
-    t_space = utl.initialize_simulation_arrays(grid_points, n_0[0], t_0, t_end)[0]
+    t_space = np.linspace(t_0, t_end, grid_points + 1)
     
     # Generate each path
     for i in range(num_paths):

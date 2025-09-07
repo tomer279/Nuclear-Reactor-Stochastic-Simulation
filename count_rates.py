@@ -8,6 +8,7 @@ considering different types of dead time effects (constant, exponential, random)
 """
 
 import numpy as np
+import utils as utl
 
 rng = np.random.default_rng()
 
@@ -85,11 +86,13 @@ def count_per_second_const_dead_time(time_mat, detect_mat, tau) -> np.array:
     
     # Process each row vectorized where possible
     for i in range(num_rows):
+        duration = time_mat[i,-1]
+        
         # Get valid detections
         valid_detects = detect_mat[i][~np.isnan(detect_mat[i])]
         valid_detections_list.append(valid_detects) # Save the valid detections
         if len(valid_detects) <= 1:
-            cps[i] = len(valid_detects) / time_mat[i,-1]
+            cps[i] = len(valid_detects) / duration
             continue
             
         # Calculate time differences between consecutive detections
@@ -99,13 +102,13 @@ def count_per_second_const_dead_time(time_mat, detect_mat, tau) -> np.array:
         valid_events = np.sum(time_diffs > tau) + 1
         
         # Calculate rate
-        cps[i] = valid_events / time_mat[i,-1]
+        cps[i] = valid_events / duration
         
     return cps
 
 
 def count_per_second_rand_dead_time(
-        time_mat, valid_detects, distribution = 'normal', **tau_params) -> np.array:
+        time_mat, detect_mat, distribution = 'normal', **tau_params) -> np.array:
     """
     Calculate counts per second considering random dead time effects.
     
@@ -116,32 +119,35 @@ def count_per_second_rand_dead_time(
     ----------
     time_mat : np.ndarray
         Matrix containing time information, where time_mat[i,-1] gives the total time for row i
-    detect_mat : np.ndarray
+    valid_detects : np.ndarray
         Matrix containing detection times, where NaN values indicate no detection
     distribution : string
         Specifing what distribution is tau generated with
-        distribution can either be normal, exponential, or uniform.
+        distribution can either be normal, uniform, exponential, or gamma.
     
     Returns
     -------
     np.ndarray
         Array of count rates (counts per second) for each row
     """
-        
-    # Initialize output array
+    
     num_rows = len(time_mat)
-    num_detects = len(valid_detects)
     cps = np.zeros(num_rows)
     
-    tau = _generate_tau_for_distribution(num_detects - 1, distribution,
-                                        **tau_params)
-    
-    # Process each row vectorized where possible
     for i in range(num_rows):
+        valid_detects = detect_mat[i,:]
+        valid_detects = valid_detects[~np.isnan(valid_detects)]
+        
+        num_detects = len(valid_detects)
+        duration = time_mat[i,-1]
+        
         if num_detects <= 1:
-            cps[i] = len(valid_detects) / time_mat[i,-1]
+            cps[i] = num_detects / duration
             continue
-            
+        
+        # Generate tau values for this row's detections
+        tau = _generate_tau_for_distribution(num_detects - 1, distribution, **tau_params)
+        
         # Calculate time differences between consecutive detections
         time_diffs = np.diff(valid_detects)
         
@@ -149,9 +155,11 @@ def count_per_second_rand_dead_time(
         valid_events = np.sum(time_diffs > tau) + 1
         
         # Calculate rate
-        cps[i] = valid_events / time_mat[i,-1]
+        cps[i] = valid_events / duration
         
     return cps
+    
+
 
 def _generate_tau_for_distribution(num_values, distribution='normal', **params):
     """
@@ -177,8 +185,8 @@ def _generate_tau_for_distribution(num_values, distribution='normal', **params):
         tau = rng.normal(loc=loc, scale=scale, size=num_values)
         
     elif distribution == 'uniform':
-        low = params.get('low', 1e-6 - 2 * np.sqrt(3) * 1e-7 )
-        high = params.get('high', 1e-6 + 2 * np.sqrt(3)  * 1e-7)
+        low = params.get('low', 1e-6 - np.sqrt(3) * 1e-7 )
+        high = params.get('high', 1e-6 + np.sqrt(3)  * 1e-7)
         tau = rng.uniform(low=low, high=high, size=num_values)
         
     elif distribution == 'exponential':
@@ -200,7 +208,8 @@ def _generate_tau_for_distribution(num_values, distribution='normal', **params):
     return tau
 
 
-def calculate_all_count_rates(simul_time_vec, simul_detect_vec, em_detect_vec = None,
+def calculate_all_count_rates(simul_time_vec, simul_detect_vec,
+                              em_detect_vec = None,
                               em_const_detect_vec = None,
                               em_uniform_detect_vec = None,
                               em_exp_detect_vec = None,
@@ -309,7 +318,7 @@ def calculate_all_count_rates(simul_time_vec, simul_detect_vec, em_detect_vec = 
     
     for detect_vec, result_key, description in taylor_data_configs:
         if detect_vec is not None:
-            results[result_key] = _calculate_cps(detect_vec, description)
+            results[result_key] = _calculate_cps(detect_vec, description)  
     
     # Calculate theoretical approximation
     if mean_tau is not None and 'stochastic_basis' in results:
@@ -318,3 +327,111 @@ def calculate_all_count_rates(simul_time_vec, simul_detect_vec, em_detect_vec = 
             np.exp(-results['stochastic_basic'] * mean_tau)
     
     return results
+
+
+def calculate_theoretical_cps(dead_time_type, mean_tau_s, std_tau_s,
+                              detect, equil):
+    
+    """
+    Calculate theoretical CPS based on dead time distribution.
+    
+    This function computes the theoretical count rate for different dead time
+    distributions using analytical formulas.
+    
+    Parameters
+    ----------
+    dead_time_type : str
+        Type of dead time distribution: 'constant', 'uniform', 'normal', or 'gamma'
+    mean_tau_s : float
+        Mean dead time in seconds
+    std_tau_s : float
+        Standard deviation of dead time in seconds
+    detect : float
+        Detection rate (s⁻¹)
+    equil : float
+        Equilibrium neutron population
+        
+    Returns
+    -------
+    float
+        Theoretical count rate (CPS)
+    """
+    if dead_time_type.lower() == 'constant':
+        return detect * equil * np.exp(- detect * equil * mean_tau_s)
+    
+    elif dead_time_type.lower() == 'uniform':
+        a_param = np.sqrt(3) * std_tau_s
+        return (np.exp(-detect * equil * mean_tau_s) * 
+                np.sinh(detect * equil * a_param) / a_param)
+    
+    elif dead_time_type.lower() == 'normal':
+        try:
+            from scipy.stats import norm
+        except ImportError:
+            raise ImportError("scipy is required for normal distribtuion theoretical CPS calculation. "
+                              "Please install scipy: pip install scipy")
+        return detect * equil * (1 - (norm.cdf(mean_tau_s / std_tau_s) -
+                                      np.exp(0.5 * (detect * equil * std_tau_s) ** 2 - 
+                                             detect * equil * mean_tau_s) *
+                                      norm.cdf(mean_tau_s / std_tau_s - detect * equil * std_tau_s)))
+    
+    elif dead_time_type.lower() == 'gamma':
+        shape = (mean_tau_s / std_tau_s ) ** 2
+        scale = (std_tau_s ** 2) / mean_tau_s
+        return detect * equil / ((scale * detect * equil +1) ** shape)
+    
+    else:
+        raise ValueError(f"Invalid dead time type: {dead_time_type}."
+                         " Use 'constant', 'uniform', 'normal', or 'gamma'")
+        
+def calculate_theoretical_cps_for_fission_rates(fission_rates, dead_time_type,
+                                                mean_tau_s, std_tau_s,
+                                                detect, absorb, source, p_v):
+    """
+    Calculate theoretical CPS for multiple fission rates.
+    
+    This function computes theoretical count rates for a range of fission rates
+    using the specified dead time distribution.
+    
+    Parameters
+    ----------
+    fission_rates : array-like
+        Array of fission rates
+    dead_time_type : str
+        Type of dead time distribution
+    mean_tau_s : float
+        Mean dead time in seconds
+    std_tau_s : float
+        Standard deviation of dead time in seconds
+    detect : float
+        Detection rate (s⁻¹)
+    absorb : float
+        Absorption rate (s⁻¹)
+    source : float
+        Source rate (s⁻¹)
+    p_v : float
+        Prompt neutron generation probability
+        
+    Returns
+    -------
+    np.ndarray
+        Array of theoretical count rates for each fission rate
+    """
+    theoretical_cps = np.zeros(len(fission_rates))
+    
+    for i, fission_rate in enumerate(fission_rates):
+        # Calculate equilibrium for this fission rate
+        params = utl.calculate_system_parameters(p_v, fission_rate, absorb,
+                                                 source, detect)
+        equil = params['equilibrium']
+        
+        # Calculate theoretical cps
+        theoretical_cps[i] = calculate_theoretical_cps(
+            dead_time_type, mean_tau_s, std_tau_s, detect, equil
+        )
+    
+    return theoretical_cps
+    
+    
+    
+    

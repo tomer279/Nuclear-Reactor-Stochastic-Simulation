@@ -178,34 +178,34 @@ class SimulationConfig:
             Formatted summary of configuration
         """
         summary = f"""
-Simulation Configuration Summary:
-================================
+        Simulation Configuration Summary:
+        ================================
 
-Physical Parameters:
-- Fission probability distribution: {self.p_v}
-- Absorption rate: {self.absorb}
-- Source rate: {self.source}
-- Detection rate: {self.detect}
-- Expected fission yield (vbar): {self.vbar:.4f}
+        Physical Parameters:
+            - Fission probability distribution: {self.p_v}
+            - Absorption rate: {self.absorb}
+            - Source rate: {self.source}
+            - Detection rate: {self.detect}
+            - Expected fission yield (vbar): {self.vbar:.4f}
 
-Time Parameters:
-- Initial time: {self.t_0}
-- End time: {self.t_end}
-- Simulation steps: {self.steps:,}
-- Grid points: {self.grid_points:,}
+        Time Parameters:
+            - Initial time: {self.t_0}
+            - End time: {self.t_end}
+            - Simulation steps: {self.steps:,}
+            - Grid points: {self.grid_points:,}
 
-Dead Time Parameters:
-- Mean dead time: {self.mean_tau:.2e}
-- Distribution: {self.tau_distribution}
+        Dead Time Parameters:
+            - Mean dead time: {self.mean_tau:.2e}
+            - Distribution: {self.tau_distribution}
 
-Fission Values:
-- Number of values: {len(self.fission_vec)}
-- Range: {self.fission_vec.min():.3f} - {self.fission_vec.max():.3f}
-- Values: {self.fission_vec}
+        Fission Values:
+            - Number of values: {len(self.fission_vec)}
+            - Range: {self.fission_vec.min():.3f} - {self.fission_vec.max():.3f}
+            - Values: {self.fission_vec}
 
-Derived Parameters:
-- Alpha range: {self.alpha_vec.min():.4f} - {self.alpha_vec.max():.4f}
-- Equilibrium population range: {self.equil.min():.2f} - {self.equil.max():.2f}
+        Derived Parameters:
+            - Alpha range: {self.alpha_vec.min():.4f} - {self.alpha_vec.max():.4f}
+            - Equilibrium population range: {self.equil.min():.2f} - {self.equil.max():.2f}
         """
         return summary
         
@@ -292,20 +292,3 @@ Derived Parameters:
         config._calculate_derived_parameters()
         
         return config
-        
-    
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        

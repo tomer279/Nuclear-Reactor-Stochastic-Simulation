@@ -22,6 +22,18 @@ Edit `config.py` to modify simulation parameters.
 ## Output
 Results are saved in `data/` directory.
 
+## Streamlit Dashboard
+A web-based dashboard is available for interactive simulation and analysis:
+- Run stochastic simulations with custom parameters
+- Perform dead time analysis with multiple distributions
+- Compare theoretical vs simulated results
+- Interactive visualization of population dynamics
+
+Deploy the dashboard using Streamlit Community Cloud or run locally with:
+```bash
+streamlit run streamlit_app.py
+```
+
 ## Future Development
 
 This project is actively being developed. See [ROADMAP.md](ROADMAP.md) for planned improvements.

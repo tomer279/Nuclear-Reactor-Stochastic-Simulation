@@ -218,7 +218,7 @@ def strong_taylor_system_with_const_dead_time(p_v: np.ndarray,
     sig_3 = np.sqrt(sig_3_squared)
     
     # Use when we want to correlate between the Wiener processes
-    #correlation = (sig_2 / sig_3) * np.exp(-dead_time_parameter)
+    # correlation = (sig_2 / sig_3) * np.exp(-dead_time_parameter)
     
     # set initial population to equilibrium if not provided
     if n_0 is None:
@@ -389,70 +389,73 @@ def weak_taylor(p_v: np.ndarray,
     return t_space, pop
 
         
-def strong_taylor_matrix(p_v, f, a, s, d, n_0, t_0, t_end, grid_points, paths):
+def strong_taylor_matrix(p_v : np.ndarray, 
+                         f : float,
+                         a : float,
+                         s : float,
+                         d : float,
+                         t_0 : float,
+                         t_end : float,
+                         grid_points : int,
+                         n_0 : np.ndarray):
     """
-    TODO: FUTURE IMPROVEMENTS NEEDED
+    Generate Strong Taylor matrix for multiple initial populations.
     
-    This function needs significant improvements:
-    
-    IMPROVEMENTS REQUIRED:
-    ====================
-    1. Implement vectorized operations for better performance
-    2. Add progress tracking and memory management
-    3. Implement parallel processing for multiple paths
-    4. Add memory-efficient batch processing
-
-    
-    CURRENT ISSUES:
-    ===============
-    - No input validation
-    - Inefficient memory usage (growing arrays)
-    - No progress tracking
-    - Sequential processing (could be parallelized)
+    Parameters
+    ----------
+    p_v : np.ndarray
+        Probability distribution for particle generation
+    f : float
+        Fission rate constant
+    a : float
+        Absorption rate constant
+    s : float
+        Source rate constant
+    d : float
+        Detection rate constant
+    t_0 : float
+        Initial time
+    t_end : float
+        End time
+    grid_points : int
+        Number of time grid points
+    n_0 : np.ndarray
+        Array of initial populations (length determines number of paths)
+       
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        Time matrix and population matrix
     """
-    t_init, n_init = strong_taylor(p_v, f, a, s, d, n_0, t_0, t_end, grid_points - 1)
-    n_mat = np.array([n_init])
-    t_mat = np.array([t_init])
-    for i in range(1, paths):
-        print(i)
-        ts, ys = strong_taylor(p_v, f, a, s, d, n_0, t_0, t_end, grid_points - 1)
-        n_mat = np.append(n_mat, [ys], axis=0)
-        t_mat = np.append(t_mat, [ts], axis = 0)
-    np.save('strong_taylor_matrix', n_mat)
-    return t_mat, n_mat
-
-
-def weak_taylor_matrix(p_v, f, a, s, d, n_0, t_0, t_end, grid_points, paths):
-    """
-    TODO: FUTURE IMPROVEMENTS NEEDED
     
-    This function needs significant improvements:
+    # Paths determined by number of populations given
+    paths = len(n_0)
     
-    IMPROVEMENTS REQUIRED:
-    ====================
-    1. Implement vectorized operations for better performance
-    2. Add progress tracking and memory management
-    3. Implement parallel processing for multiple paths
-    4. Add memory-efficient batch processing
-
+    # Pre-allocate arrays 
+    n_mat = np.zeros((paths, grid_points + 1))
     
-    CURRENT ISSUES:
-    ===============
-    - No input validation
-    - Inefficient memory usage (growing arrays)
-    - No progress tracking
-    - Sequential processing (could be parallelized)
-    """
-    t_init, n_init = weak_taylor(p_v, f, a, s, d, n_0, t_0, t_end, grid_points - 1)
-    n_mat = np.array([n_init])
-    t_mat = np.array([t_init])
-    for i in range(1, paths):
-        print(i)
-        ts, ys = weak_taylor(p_v, f, a, s, d, n_0, t_0, t_end, grid_points - 1)
-        n_mat = np.append(n_mat, [ys], axis=0)
-        t_mat = np.append(t_mat, [ts], axis = 0)
-    np.save('weak_taylor_matrix', n_mat)
-    return t_mat, n_mat
+    # Generate shared time vector
+    t_space = np.linspace(t_0, t_end, grid_points + 1)
+    
+    # Assign initial populations to the first column
+    n_mat[:,0] = n_0
+    
+    progress_interval = max(1, paths // 10)
+    
+    for i in range(paths):
+        init_pop_for_path = n_0[i]
+        _, pop = strong_taylor(p_v, f, a, s, d, init_pop_for_path
+                                     , t_0, t_end, grid_points - 1)
+        
+        # Assign simulation results starting from column 1
+        n_mat[i, 1:] = pop[1:]
+        
+        if i % progress_interval == 0:
+            progress_percent = (i / paths) * 100
+            print(f"Strong Taylor Matrix Progress: {progress_percent:.1f}% ({i} / {paths})")
+    
+    print(f"Strong Taylor Matrix Complete: {paths} paths generated")
+    return t_space, n_mat
 
 
 def _save_taylor_results(pop : np.ndarray, detect : np.ndarray,
