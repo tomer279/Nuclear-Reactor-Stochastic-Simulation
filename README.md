@@ -1,7 +1,7 @@
-# Nuclear Reactor Stochastic Simulation
+# Fission Chain Stochastic Simulation
 
 ## Overview
-This project implements stochastic and Euler-Maruyama simulations for nuclear reactor dynamics, including dead time effects and count rate calculations.
+This project implements stochastic and Euler-Maruyama simulations for fission chain dynamics, including dead time effects and count rate calculations.
 
 ## Features
 
@@ -42,5 +42,6 @@ This project is actively being developed. See [ROADMAP.md](ROADMAP.md) for plann
 
 ## License
 MIT License - see [LICENSE](LICENSE) for details.
+
 
 
