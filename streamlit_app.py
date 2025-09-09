@@ -385,16 +385,24 @@ def _display_clear_buttons():
     """
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Clear All Results"):
-           app_state = st.session_state.app_state
-           app_state.clear_all()
-           st.rerun() 
+        _clear_all_results_button()
     
     with col2:
-        if st.button("Clear CPS Analysis only"):
-            app_state = st.session_state.app_state
-            app_state.clear_dead_time_analyses()
-            st.rerun()
+        _clear_cps_analysis_button()
+
+def _clear_all_results_button():
+    """Display and handle clear all results button"""
+    if st.button("Clear All Results"):
+       app_state = st.session_state.app_state
+       app_state.clear_all()
+       st.rerun()
+
+def _clear_cps_analysis_button():
+    """Display and handle clear dead time analyses button"""
+    if st.button("Clear CPS Analysis only"):
+        app_state = st.session_state.app_state
+        app_state.clear_dead_time_analyses()
+        st.rerun()
     
 # =============================================================================
 # DEAD TIME ANALYSIS UI FUNCTIONS
