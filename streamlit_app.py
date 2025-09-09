@@ -1,7 +1,29 @@
+"""
+Fission Chain Stochastic Simulation Dashboard
+
+A comprehensive Streamlit application for simulating neutron population dynamics
+in fission chains with dead time analysis capabilities.
+
+This module provides:
+- Interactive parameter input for simulation configuration
+- Stochastic simulation of neutron population dynamics
+- Multiple dead time distribution analysis (Constant, Normal, Uniform, Gamma)
+- Comparative visualization of simulation results
+- Theoretical CPS calculations for equilibrium conditions
+- Statistical analysis and error calculations
+
+Key Features:
+- Real-time progress tracking during simulations
+- Multiple analysis comparison capabilities
+- Interactive plotting with population dynamics visualization
+- Dead time effect analysis on count rates
+- Theoretical vs simulated CPS comparison
+
+"""
 
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
+from plot_simulations import plot_stochastic_population_dynamics
 from models import SimulationParameters, DeadTimeAnalysis, AppState
 from services import SimulationService, DeadTimeAnalysisService
 from ui_components import ParameterInput, ResultsDisplay, DeadTimeAnalysisUI
@@ -14,8 +36,9 @@ from ui_components import ParameterInput, ResultsDisplay, DeadTimeAnalysisUI
 simulation_service = SimulationService()
 dead_time_service = DeadTimeAnalysisService()
 
+# Configure Streamlit page settings
 st.set_page_config(
-    page_title = "Nuclear Reactor Stochastic Simulation Dashboard",
+    page_title = "Fission Chain Stochastic Simulation Dashboard",
     layout = "wide"
     )
 
@@ -27,53 +50,28 @@ if 'app_state' not in st.session_state:
     st.session_state.app_state = AppState()
 
 # =============================================================================
-# PLOTTING FUNCTIONS
-# =============================================================================
-
-def create_population_plot(time_matrix, population_matrix, fission_rate = None):
-    """Create population evolution plot following project plotting standards"""
-    # Setup professional plotting style
-    plt.style.use('default')
-    plt.rcParams.update({
-        'figure.figsize': (12, 8),
-        'font.size': 12,
-        'axes.grid': True,
-        'grid.alpha': 0.3,
-        'lines.linewidth': 2,
-        'axes.labelsize': 14,
-        'axes.titlesize': 16,
-        'legend.fontsize': 12,
-        'figure.dpi': 100
-    })
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Plot population over time
-    ax.plot(time_matrix[0], population_matrix[0], 'b-', linewidth=2, 
-            label = (f'Neutron Population (Fission : {fission_rate})' if fission_rate
-                     else 'Neutron Population'))
-    
-    ax.set_xlabel('Time (s)')
-    ax.set_ylabel('Population')
-    title = (f'Population Evolution (Fission Rate: {fission_rate})' if fission_rate 
-             else 'Stochastic Simulation: Population Evolution')
-    ax.set_title(title, fontsize=16, fontweight='bold')
-    
-    # Professional grid and legend
-    ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=12, loc = 'best')
-    
-    # Rotate x-axis labels for better readability
-    plt.setp(ax.get_xticklabels(), rotation=45, fontsize=10)
-    
-    plt.tight_layout()
-    return fig
-
-# =============================================================================
 # STATISTICS AND DATA PROCESSING FUNCTIONS
 # =============================================================================
 
 def calculate_detection_stats(detection_matrix):
-    """Calculate detection statistics"""
+    """
+    Calculate detection statistics from simulation results.
+    
+    Processes the detection matrix to extract valid detection events,
+    calculate count rates, and provide summary statistics.
+
+    Parameters
+    ----------
+    detection_matrix : tuple
+        Tuple containing detection times array
+
+    Returns
+    -------
+    dict: Dictionary containing:
+            - total_detections (int): Number of valid detections
+            - cps (float): Counts per second
+            - detection_times (list): List of detection times
+    """
     # Clean detection matrix (remove NaN values)
     valid_detections = detection_matrix[0]
     valid_detections = valid_detections[~np.isnan(valid_detections)]
@@ -102,7 +100,31 @@ def calculate_detection_stats(detection_matrix):
 
 def _run_dead_time_analysis(results_dict, params, mean_dead_time,
                             dead_time_std_percent, dead_time_type, analysis_name):
-    """Run dead time analysis on simulation results"""
+    """
+    Run dead time analysis on simulation results.
+    
+    Executes dead time analysis using the provided parameters and stores
+    the results in the application state.
+
+    Parameters
+    ----------
+    results_dict : dict
+        Dictionary containing simulation results
+    param : SimulationParameters
+        Simulation parameters used
+    mean_dead_time :float
+        Mean dead time value in microseconds  
+    dead_time_std_percent : float 
+        Standard deviation as percentage
+    dead_time_type : str
+        Type of dead time distribution
+    analysis_name : str 
+        Name identifier for this analysis
+
+    Raises
+    ------
+    Exception: If dead time analysis fails, displays error message
+    """
     try:
         
         # Run analysis using service
@@ -122,16 +144,32 @@ def _run_dead_time_analysis(results_dict, params, mean_dead_time,
         st.exception(e)
     
 def _add_theoretical_cps_to_analysis(analysis_name, params):
-    """Add theoretical CPS calculation to existing analysis"""
-    try:
-        app_state = st.session_state.app_state
-        
-        # Find the analysis by name
-        analysis = app_state.get_analysis_by_name(analysis_name)
-        if not analysis:
-            st.error(f"Analysis {analysis_name} not found")
-            return
-        
+    """
+    Add theoretical CPS calculation to existing analysis.
+    
+    Validates that the analysis exists, then adds theoretical CPS
+    calculations for comparison with simulated results.
+
+    Parameters
+    ----------
+    analysis_name : str 
+        Name of the analysis to update
+    params : SimulationParameters 
+        Simulation parameters
+
+    Raises
+    ------
+    Exception: If theoretical CPS addition fails, displays error message
+    """
+    app_state = st.session_state.app_state
+    
+    # Find the analysis by name
+    analysis = app_state.get_analysis_by_name(analysis_name) 
+    if not analysis:
+        st.error(f"Analysis {analysis_name} not found")
+        return
+    
+    try:  
         updated_analysis = dead_time_service.add_theoretical_cps(analysis, params)
         
         app_state.update_analysis(updated_analysis)
@@ -147,7 +185,19 @@ def _add_theoretical_cps_to_analysis(analysis_name, params):
 # =============================================================================
 
 def _handle_simulation_run(run_sim, sim_params):
-    """Handle simulation run logic"""
+    """
+    Handle simulation run logic and validation.
+    
+    Validates simulation parameters and triggers simulation execution
+    if the run button was pressed and valid parameters are provided.
+    
+    Parameters
+    ----------
+    run_sim : bool
+        Whether the run simulation button was pressed
+    sim_params : SimulationParameters
+        Simulation parameters to use
+    """
     if not run_sim:
         return
     
@@ -161,36 +211,30 @@ def _handle_simulation_run(run_sim, sim_params):
     _run_simulations_for_selected_rates(sim_params)
     
 def _run_simulations_for_selected_rates(params: SimulationParameters):
-    """ Run simulations for all selected fission rates using services"""
+    """
+    Run simulations for all selected fission rates using services.
+   
+    Orchestrates the complete simulation process including progress tracking,
+    result collection, and state management.
+   
+    Parameters
+    ----------
+    params : SimulationParameters
+        Simulation parameters containing fission rates and other settings
+                                    
+    Raises
+    ------
+    Exception: If simulation fails, displays error message and exception details
+    """
     try:
-       
-        results_dict = {}
-        total_rates = len(params.fission_rates)
-       
+
         # Create a container for progress updates
         progress_bar = st.progress(0)
         status_text = st.empty()
         
-        for i, fission_rate in enumerate(params.fission_rates):
-            # Update progress display
-            progress = (i+1) / total_rates
-            progress_bar.progress(progress)
-            status_text.text(f"Simulating fission rate {fission_rate} ({i+1}/{total_rates})...")
-        
-            # Create single fission rate parameters
-            single_rate_params = SimulationParameters(
-                fission_rates = [fission_rate],
-                detection_rate = params.detection_rate,
-                absorption_rate = params.absorption_rate,
-                source_rate = params.source_rate,
-                initial_population = params.initial_population,
-                simulation_steps = params.simulation_steps,
-                use_equilibrium = params.use_equilibrium
-            )
-            
-            single_result = simulation_service.run_multiple_simulations(single_rate_params)
-            results_dict.update(single_result)
-        
+        results_dict = _run_all_fission_rate_simulations(params,
+                                                         progress_bar,
+                                                         status_text)
         # Clear progress indicators
         progress_bar.empty()
         status_text.empty()
@@ -205,13 +249,52 @@ def _run_simulations_for_selected_rates(params: SimulationParameters):
         st.error(f"Simulation failed: {str(e)}")
         st.exception(e)
         
+        
+def _run_all_fission_rate_simulations(params, progress_bar, status_text):
+    """Run simulations for all fission rates and return results"""
+    results_dict = {}
+    total_rates = len(params.fission_rates)
+   
+    for i, fission_rate in enumerate(params.fission_rates):
+        # Update progress display
+        progress = (i+1) / total_rates
+        progress_bar.progress(progress)
+        status_text.text(f"Simulating fission rate {fission_rate} ({i+1}/{total_rates})...")
     
+        # Create single fission rate parameters
+        single_rate_params = SimulationParameters(
+            fission_rates = [fission_rate],
+            detection_rate = params.detection_rate,
+            absorption_rate = params.absorption_rate,
+            source_rate = params.source_rate,
+            initial_population = params.initial_population,
+            simulation_steps = params.simulation_steps,
+            use_equilibrium = params.use_equilibrium
+        )
+        
+        single_result = simulation_service.run_multiple_simulations(single_rate_params)
+        results_dict.update(single_result)
+    
+    return results_dict
+
 # =============================================================================
 # UI DISPLAY FUNCTIONS
 # =============================================================================
     
 def _display_simulation_tabs(results, results_display):
-    """Display main simulation results tabs"""
+    """
+    Display main simulation results in organized tabs.
+    
+    Creates a tabbed interface for different views of simulation results:
+    comparative analysis, individual plots, and summary tables.
+    
+    Parameters
+    ----------
+    results : dict
+        Dictionary containing simulation results
+    results_display : ResultsDisplay
+        Results display component instance
+    """
     # Display results in tabs
     tab1, tab2, tab3 = st.tabs(["Comparative Analysis", "Individual Plots", "Summary Table"])
     
@@ -223,7 +306,17 @@ def _display_simulation_tabs(results, results_display):
         results_display.display_summary_table(results)
  
 def _display_individual_plots(results):
-    """Display individual plots tab"""
+    """
+    Display individual plots for each fission rate.
+    
+    Creates separate plots and statistics for each simulated fission rate,
+    allowing detailed analysis of individual simulation results.
+    
+    Parameters
+    ----------
+    results : dict
+        Dictionary containing simulation results keyed by fission rate
+    """
     st.subheader("Individual Population Plots")
     
     # Create individual plots for each fission rate
@@ -233,18 +326,41 @@ def _display_individual_plots(results):
         _display_single_fission_plot(result, fission_rate)
         
 def _display_single_fission_plot(result, fission_rate):
-    """Display plot and statistics for a single fission rate"""
+    """
+    Display plot and statistics for a single fission rate.
+    
+    Creates a population dynamics plot and displays key statistics
+    for the specified fission rate simulation.
+    
+    Parameters
+    ----------
+    result
+        Simulation result object containing population and time data
+    fission_rate : float
+        The fission rate value for this simulation
+    """
     st.write(f"**Fission Rate: {fission_rate}**")
     
     # Create and display plot
-    fig = create_population_plot(result.time_matrix, result.population_matrix, fission_rate)
+    fig = plot_stochastic_population_dynamics(result.population_matrix,
+                                              result.time_matrix, fission_rate)
     st.pyplot(fig)
     
     # Display statistics
     _display_fission_rate_statistics(result)
 
 def _display_fission_rate_statistics(result):
-    """Display statistics for a single fission rate"""
+    """
+    Display statistics for a single fission rate simulation.
+    
+    Shows key metrics including final population, mean population,
+    total detections, and counts per second.
+    
+    Parameters
+    ----------
+    result
+        Simulation result object containing population and detection data
+    """
     population_data = result.population_matrix[0]
     detection_stats = calculate_detection_stats(result.detection_matrix)
     
@@ -261,7 +377,12 @@ def _display_fission_rate_statistics(result):
     st.markdown("---")
         
 def _display_clear_buttons():
-    """Display clear results buttons in sidebar"""
+    """
+    Display clear results buttons in sidebar.
+    
+    Provides buttons to clear all results or only dead time analyses,
+    with appropriate confirmation and state management.
+    """
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Clear All Results"):
@@ -275,7 +396,6 @@ def _display_clear_buttons():
             app_state.clear_dead_time_analyses()
             st.rerun()
     
- 
 # =============================================================================
 # DEAD TIME ANALYSIS UI FUNCTIONS
 # =============================================================================
@@ -326,7 +446,6 @@ def _display_existing_dead_time_analyses(results, params):
     with tab_dt3:
         _display_add_new_dead_time_analysis(results, params)
                 
-                
 def _display_individual_dead_time_analyses():
     """Display individual dead time analysis statistics"""
     st.subheader("Individual Analysis Statistics")
@@ -372,6 +491,7 @@ def _display_theoretical_cps_button(analysis : DeadTimeAnalysis):
     # Show button to add theoretical CPS
     if st.button("Add Theoretical CPS",
             key = f"theo_{analysis.config.analysis_name}"):
+        
         _add_theoretical_cps_to_analysis(analysis.config.analysis_name,
                                          app_state.simulation_params)
         st.rerun()
@@ -435,10 +555,10 @@ def _display_welcome_screen(params: SimulationParameters):
 def _display_welcome_header():
     """Display welcome header and overview"""
     st.markdown("""
-    ## Welcome to the Nuclear Reactor Stochastic Simulation Dashboard!
+    ## Welcome to the Fission Chain Stochastic Simulation Dashboard!
     
     This dashboard demonstrates **stochastic simulation** of neutron 
-    population dynamics in nuclear reactors with comprehensive **dead time analysis**.
+    population dynamics in fission chains  with comprehensive **dead time analysis**.
     
     ### What You'll See:
     - **Comparative Analysis**: Population evolution for multiple fission rates
@@ -485,11 +605,15 @@ def _display_parameter_preview(params : SimulationParameters):
         
     with col2:
         st.write(f"**Source Rate:** {params.source_rate} s⁻¹")
-        if params.use_equilibrium:
-            st.write("**Initial Population:** Equilibrium values (enables theoretical CPS)")
-        else:
-            st.write(f"**Initial Population:** {params.initial_population} (theoretical CPS not available)")
+        _display_initial_population_info(params)
         st.write(f"**Simulation Steps:** {params.simulation_steps}")
+
+def _display_initial_population_info(params):
+    """Display initial population information based on equilibrium setting"""
+    if params.use_equilibrium:
+        st.write("**Initial Population:** Equilibrium values (enables theoretical CPS)")
+    else:
+        st.write(f"**Initial Population:** {params.initial_population} (theoretical CPS not available)")
 
 def _display_dead_time_preview():
     """Display dead time analysis preview"""
@@ -532,7 +656,14 @@ def _display_theoretical_cps_info(params: SimulationParameters):
 # =============================================================================
 
 def main():
-    st.title("Nuclear Reactor Stochastic Simulation Dashboard")
+    """
+    Main application function.
+    
+    Sets up the Streamlit interface, handles user interactions,
+    and orchestrates the complete application workflow.
+    """
+    
+    st.title("Fission Chain Stochastic Simulation Dashboard")
     st.markdown("---")
     
     # Sidebar for parameters

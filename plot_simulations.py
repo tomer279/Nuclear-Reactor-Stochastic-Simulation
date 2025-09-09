@@ -15,7 +15,6 @@ ORGANIZATION:
 
 import numpy as np
 import matplotlib.pyplot as plt
-import utils as utl
 from typing import Optional
 
 # =============================================================================
@@ -70,22 +69,25 @@ class PlotStyle:
 # =============================================================================
 
 def plot_stochastic_population_dynamics(
-        population_matrices: list,
-        fission_values: list,
-        selected_fission_values: Optional[list] = None,
+        population_matrix: np.ndarray,
+        time_matrix: np.ndarray,
+        fission_value: float,
         downsample_factor: Optional[int] = None,
         save_path: Optional[str] = None) -> plt.Figure:
     """
-    Plot population dynamics from stochastic simulations for specific fission values.
+    Plot population dynamics from a single stochastic simulation.
+    
+    This function plots all trajectories (rows) from a population matrix,
+    following the project's plotting standards.
     
     Parameters
     ----------
-    population_matrices : list
-        List of population matrices for each fission value
-    fission_values : list or np.ndarray
-        List of all fission values corresponding to the matrices
-    selected_fission_values : list, optional
-        List of specific fission values to plot. If None, plot all.
+    population_matrix : np.ndarray
+        Population matrix with shape (num_trajectories, num_steps)
+    time_matrix : np.ndarray
+        Time matrix with shape (num_trajectories, num_steps)
+    fission_value : float
+        Fission value for labeling the plot
     downsample_factor : int, optional
         Factor to downsample data for plotting. If None, plot all points.
     save_path : str, optional
@@ -96,87 +98,43 @@ def plot_stochastic_population_dynamics(
     plt.Figure
         The created figure
     """
+    # Setup professional plotting style (following streamlit_app standards)
     PlotStyle.setup_default_style()
     
-    # Convert fission_values to list if it's a numpy array
-    fission_values_list = list(fission_values)
+    # Validate input
+    if population_matrix.ndim != 2 or time_matrix.ndim != 2:
+        raise ValueError("Both matrices must be 2D with shape (trajectories, steps)")
     
-    # Filter matrices and fission values based on selection
-    if selected_fission_values is not None:
-        # Find indices of selected fission values
-        selected_indices = []
-        selected_fission_filtered = []
-        selected_pop_matrices = []
-        
-        for fission in selected_fission_values:
-            if fission in fission_values_list:
-                idx = fission_values_list.index(fission)
-                selected_indices.append(idx)
-                selected_fission_filtered.append(fission)
-                selected_pop_matrices.append(population_matrices[idx])
-            else:
-                print(f"Warning: Fission value {fission} not found in available values")
-        
-        if not selected_pop_matrices:
-            raise ValueError("No valid fission values selected")
-        
-        fission_values_to_plot = selected_fission_filtered
-        population_matrices_to_plot = selected_pop_matrices
-    else:
-        fission_values_to_plot = fission_values_list
-        population_matrices_to_plot = population_matrices
+    if population_matrix.shape != time_matrix.shape:
+        raise ValueError("population_matrix and time_matrix must have the same shape")
     
-    # Create subplots for selected fission values
-    num_fission = len(fission_values_to_plot)
+    num_trajectories, num_steps = population_matrix.shape
     
-    # Handle single subplot case properly
-    if num_fission == 1:
-        fig, ax = plt.subplots(figsize=(12, 8))
-        axes = [ax]
-    else:
-        fig, axes = plt.subplots(2, (num_fission + 1) // 2, figsize=(15, 10))
-        axes = axes.flatten()
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 6))
     
-    colors = plt.cm.viridis(np.linspace(0, 1, num_fission))
+    # Generate colors for different trajectories
+    colors = plt.cm.viridis(np.linspace(0, 1, num_trajectories))
     
-    for i, (pop_mat, fission) in enumerate(zip(population_matrices_to_plot, fission_values_to_plot)):
-        if i < len(axes):
-            ax = axes[i]
-            
-            # Get the single trajectory
-            pop_trajectory = pop_mat[0, :]  # Only one trajectory
-            
-            # Apply downsampling if specified
-            if downsample_factor is not None:
-                pop_data = pop_trajectory[::downsample_factor]
-                step_indices = np.arange(0, len(pop_trajectory), downsample_factor)
-            else:
-                pop_data = pop_trajectory
-                step_indices = np.arange(len(pop_trajectory))
-            
-            print(f"Plotting fission {fission}: {len(pop_data)} steps")
-            
-            # Plot the population against step index
-            ax.plot(step_indices, pop_data, color=colors[i], linewidth=1, 
-                   label=f'Fission = {fission}')
-            
-            ax.set_xlabel('Simulation Step', fontsize=12)
-            ax.set_ylabel('Population', fontsize=12)
-            ax.set_title(f'Fission = {fission}', fontsize=14, fontweight='bold')
-            ax.grid(True, alpha=0.3)
-            ax.legend(fontsize=10)
+    # Plot each trajectory
+    for i in range(num_trajectories):
+        _plot_single_trajectory(ax, time_matrix, population_matrix,
+                                i, colors[i], downsample_factor)
     
-    # Hide unused subplots
-    for i in range(num_fission, len(axes)):
-        axes[i].set_visible(False)
+    # Set labels and title (following streamlit_app style)
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Population')
+    ax.set_title(f'Population Evolution (Fission Rate: {fission_value})', 
+                fontsize=16, fontweight='bold')
     
-    # Update title to reflect selection
-    if selected_fission_values is not None:
-        title = f'Stochastic Population Dynamics - Selected Fission Values: {selected_fission_values}'
-    else:
-        title = 'Stochastic Population Dynamics - All Fission Values'
+    # Professional grid and legend
+    ax.grid(True, alpha=0.3)
+    if 1 < num_trajectories <= 10:
+        ax.legend(fontsize=12, loc='best')
     
-    plt.suptitle(title, fontsize=16, fontweight='bold')
+    # Rotate x-axis labels for better readability
+    plt.setp(ax.get_xticklabels(), rotation=45, fontsize=10)
+    
     plt.tight_layout()
     
     if save_path:
@@ -185,364 +143,76 @@ def plot_stochastic_population_dynamics(
     return fig
 
 
-def plot_euler_maruyama_population_dynamics(
-        population_matrices: list,                                  
-        fission_values: list,                                
-        selected_fission_values: Optional[list] = None,                              
-        dead_time_type: str = 'basic',  
-        downsample_factor: Optional[int] = None,                 
-        save_path: Optional[str] = None) -> plt.Figure:
+def _plot_single_trajectory(ax, time_matrix, population_matrix,
+                            trajectory_idx, color, downsample_factor = None,
+                            max_trajectories_for_legend = 10):
+    
     """
-    Plot population dynamics from Euler-Maruyama simulations for specific fission values.
+    Plot a single trajectory from the population matrix.
     
     Parameters
     ----------
-    population_matrices : list
-        List of population matrices for each fission value
-    fission_values : list or np.ndarray
-        List of all fission values corresponding to the matrices
-    selected_fission_values : list, optional
-        List of specific fission values to plot. If None, plot all.
-    dead_time_type : str, optional
-        Type of dead time ('basic', 'const', 'exp') for title
+    ax : matplotlib.axes.Axes
+        The axes to plot on
+    time_matrix : np.ndarray
+        Time matrix with shape (num_trajectories, num_steps)
+    population_matrix : np.ndarray
+        Population matrix with shape (num_trajectories, num_steps)
+    trajectory_idx : int
+        Index of the trajectory to plot
+    color : str or tuple
+        Color for the trajectory line
     downsample_factor : int, optional
-        Factor to downsample data for plotting. If None, plot all points.
-    save_path : str, optional
-        Path to save the plot
-        
-    Returns
-    -------
-    plt.Figure
-        The created figure
+        Factor to downsample data for plotting
+    max_trajectories_for_legend : int
+        Maximum number of trajectories to show in legend
     """
-    PlotStyle.setup_default_style()
     
-    # Convert fission_values to list if it's a numpy array
-    fission_values_list = list(fission_values)
-    
-    # Filter matrices and fission values based on selection
-    if selected_fission_values is not None:
-        # Find indices of selected fission values
-        selected_indices = []
-        selected_fission_filtered = []
-        selected_pop_matrices = []
+    time_data = time_matrix[trajectory_idx, :]
+    pop_data = population_matrix[trajectory_idx, :]
         
-        for fission in selected_fission_values:
-            if fission in fission_values_list:
-                idx = fission_values_list.index(fission)
-                selected_indices.append(idx)
-                selected_fission_filtered.append(fission)
-                selected_pop_matrices.append(population_matrices[idx])
-            else:
-                print(f"Warning: Fission value {fission} not found in available values")
+    # Apply downsampling if specified
+    if downsample_factor is not None:
+        time_data = time_data[::downsample_factor]
+        pop_data = pop_data[::downsample_factor]
         
-        if not selected_pop_matrices:
-            raise ValueError("No valid fission values selected")
-        
-        fission_values_to_plot = selected_fission_filtered
-        population_matrices_to_plot = selected_pop_matrices
-    else:
-        fission_values_to_plot = fission_values_list
-        population_matrices_to_plot = population_matrices
-    
-    # Create subplots for selected fission values
-    num_fission = len(fission_values_to_plot)
-    
-    # Handle single subplot case properly
-    if num_fission == 1:
-        fig, ax = plt.subplots(figsize=(12, 8))
-        axes = [ax]
-    else:
-        fig, axes = plt.subplots(2, (num_fission + 1) // 2, figsize=(15, 10))
-        axes = axes.flatten()
-    
-    colors = plt.cm.plasma(np.linspace(0, 1, num_fission))
-    
-    for i, (pop_mat, fission) in enumerate(zip(population_matrices_to_plot, fission_values_to_plot)):
-        if i < len(axes):
-            ax = axes[i]
-            
-            # Get the population data (Euler-Maruyama has 1D arrays)
-            pop_data = pop_mat
-            
-            # Apply downsampling if specified
-            if downsample_factor is not None:
-                pop_data = pop_data[::downsample_factor]
-                step_indices = np.arange(0, len(pop_mat), downsample_factor)
-            else:
-                step_indices = np.arange(len(pop_mat))
-            
-            print(f"Plotting Euler-Maruyama fission {fission}: {len(pop_data)} steps")
-            
-            # Plot the population against step index
-            ax.plot(step_indices, pop_data, color=colors[i], linewidth=2, 
-                   label=f'Fission = {fission}')
-            
-            ax.set_xlabel('Simulation Step', fontsize=12)
-            ax.set_ylabel('Population', fontsize=12)
-            ax.set_title(f'Euler-Maruyama Fission = {fission}', fontsize=14, fontweight='bold')
-            ax.grid(True, alpha=0.3)
-            ax.legend(fontsize=10)
-    
-    # Hide unused subplots
-    for i in range(num_fission, len(axes)):
-        axes[i].set_visible(False)
-    
-    # Update title to reflect selection and dead time type
-    dead_time_label = {
-        'basic': 'Without Dead Time',
-        'const': 'With Constant Dead Time',
-        'exp': 'With Exponential Dead Time'
-    }.get(dead_time_type, dead_time_type)
-    
-    if selected_fission_values is not None:
-        title = f'Euler-Maruyama Population Dynamics - {dead_time_label}\nSelected Fission Values: {selected_fission_values}'
-    else:
-        title = f'Euler-Maruyama Population Dynamics - {dead_time_label}\nAll Fission Values'
-    
-    plt.suptitle(title, fontsize=16, fontweight='bold')
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    return fig
+    # Plot the trajectory
+    ax.plot(time_data, pop_data, 
+            color=color, linewidth=2, alpha=0.7,
+            label= (f'Trajectory {trajectory_idx + 1}' 
+                    if trajectory_idx < max_trajectories_for_legend else None))
 
 
 # =============================================================================
-# 4. COUNT RATE PLOTS
-# =============================================================================
-
-def plot_stochastic_basic_cps(alpha_inv_vec : np.ndarray, cps : np.ndarray,
-                          save_path : Optional[str] = None) -> plt.Figure:
-    """
-    Plot stochastic simulation count rates without dead time.
-    
-    Parameters
-    ----------
-    alpha_inv_vec : np.ndarray
-        Array of inverse Rossi-alpha values
-    cps : np.ndarray
-        Array of count rates (counts per second)
-    save_path : str, optional
-        Path to save the plot
-        
-    Returns
-    -------
-    plt.Figure
-        The created figure
-    """
-    PlotStyle.setup_default_style()
-    
-    plt.plot(alpha_inv_vec, cps, label = "Stochastic simulation",
-             color = 'blue', markersize = 6, linewidth = 2)
-    plt.xticks(alpha_inv_vec, rotation = 45, fontsize = 10)
-    plt.title("Stochastic Count Rates without Dead Time", fontsize = 16,
-              fontweight = 'bold')
-    plt.xlabel("1/alpha (inverse Rossi-alpha)", fontsize = 14)
-    plt.ylabel("Count per Second (CPS)", fontsize = 14)
-    plt.grid(True, alpha = 0.3)
-    plt.legend(fontsize = 12)
-    plt.tight_layout()
-    
-    return plt.gcf() 
- 
-   
-def plot_stochastic_const_dead_time_cps(alpha_inv_vec : np.ndarray,
-                                    cps_tau : np.ndarray,
-                                    tau: float,
-                                    save_path: Optional[str] = None) -> plt.Figure:
-    """
-    Plot stochastic simulation count rates with constant dead time.
-    
-    Parameters
-    ----------
-    alpha_inv_vec : np.ndarray
-        Array of inverse Rossi-alpha values
-    cps_tau : np.ndarray
-        Array of count rates with dead time effects
-    tau : float
-        Dead time value
-    save_path : str, optional
-        Path to save the plot
-        
-    Returns
-    -------
-    plt.Figure
-        The created figure
-    """
-    
-    PlotStyle.setup_default_style()
-    plt.plot(alpha_inv_vec, cps_tau, 's-', label =
-             "Stochastic simulation with constant dead time", color = 'red')
-    plt.xticks(alpha_inv_vec, rotation = 45, fontsize = 10)
-    plt.title(f"Stochastic Count Rates with Constant Dead Time tau = {tau:.1e}")
-    plt.xlabel("1/alpha (inverse Rossi-alpha)", fontsize = 14)
-    plt.ylabel("Count per Second (CPS)", fontsize = 14)
-    plt.grid(True, alpha = 0.3)
-    plt.legend(fontsize = 12)
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
-    
-    return plt.gcf() 
-
-# =============================================================================
-# EULER-MARUYAMA PLOTTING FUNCTIONS
-# =============================================================================
-
-def plot_euler_maruyama_basic_cps(alpha_inv_vec : np.ndarray, cps_em : np.ndarray,
-                              save_path: Optional[str] = None) -> plt.Figure:
-    """
-    Plot Euler-Maruyama count rates without dead time.
-    
-    Parameters
-    ----------
-    alpha_inv_vec : np.ndarray
-        Array of inverse Rossi-alpha values
-    cps_em : np.ndarray
-        Array of Euler-Maruyama count rates
-    save_path : str, optional
-        Path to save the plot
-        
-    Returns
-    -------
-    plt.Figure
-        The created figure
-    """
-    PlotStyle.setup_default_style()
-    
-    plt.plot(alpha_inv_vec, cps_em, 'o-',
-             label = "Euler-Maruyama without Dead Time",
-             color = 'green', markersize = 8, linewidth = 2)
-    plt.xticks(alpha_inv_vec, rotation = 45, fontsize = 10)
-    plt.title("Euler-Maruyama Count Rates without Dead Time",
-              fontsize = 16, fontweight = 'bold')
-    plt.xlabel("1/alpha (inverse Rossi-alpha)", fontsize = 14)
-    plt.ylabel("Count per Second (CPS)", fontsize = 14)
-    plt.grid(True, alpha = 0.3)
-    plt.legend(fontsize = 12)
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
-    
-    return plt.gcf() 
-
-
-def plot_euler_maruyama_const_dead_time_cps(alpha_inv_vec: np.ndarray,
-                                        cps_em_tau: np.ndarray, 
-                                       tau: float,
-                                       save_path: Optional[str] = None) -> plt.Figure:
-    """
-    Plot Euler-Maruyama count rates with constant dead time.
-    
-    Parameters
-    ----------
-    alpha_inv_vec : np.ndarray
-        Array of inverse Rossi-alpha values
-    cps_em_tau : np.ndarray
-        Array of Euler-Maruyama count rates with dead time
-    tau : float
-        Dead time value
-    save_path : str, optional
-        Path to save the plot
-        
-    Returns
-    -------
-    plt.Figure
-        The created figure
-    """
-    PlotStyle.setup_default_style()
-    
-    plt.plot(alpha_inv_vec, cps_em_tau, 's-', 
-             label="Euler-Maruyama with constant dead time",
-             color='purple', markersize=8, linewidth=2)
-    plt.xticks(alpha_inv_vec, rotation=45, fontsize=10)
-    plt.title(f"Euler-Maruyama Count Rates with Constant Dead Time τ = {tau:.1e}", 
-              fontsize=16, fontweight='bold')
-    plt.xlabel("1/alpha (inverse Rossi-alpha)", fontsize=14)
-    plt.ylabel("Count per Second (CPS)", fontsize=14)
-    plt.grid(True, alpha=0.3)
-    plt.legend(fontsize=12)
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    return plt.gcf() 
-
-
-def plot_euler_maruyama_exp_dead_time_cps(alpha_inv_vec: np.ndarray,
-                                      cps_em_tau: np.ndarray, 
-                                     tau: float,
-                                     save_path: Optional[str] = None) -> plt.Figure:
-    """
-    Plot Euler-Maruyama count rates with exponential dead time.
-    
-    Parameters
-    ----------
-    alpha_inv_vec : np.ndarray
-        Array of inverse Rossi-alpha values
-    cps_em_tau : np.ndarray
-        Array of Euler-Maruyama count rates with exponential dead time
-    tau : float
-        Mean dead time value
-    save_path : str, optional
-        Path to save the plot
-        
-    Returns
-    -------
-    plt.Figure
-        The created figure
-    """
-    PlotStyle.setup_default_style()
-    
-    plt.plot(alpha_inv_vec, cps_em_tau, '^-', 
-             label="Euler-Maruyama with Exponential dead time",
-             color='orange', markersize=8, linewidth=2)
-    plt.xticks(alpha_inv_vec, rotation=45, fontsize=10)
-    plt.title(f"Euler-Maruyama Count Rates with Exponential Dead Time τ = {tau:.1e}", 
-              fontsize=16, fontweight='bold')
-    plt.xlabel("1/alpha (inverse Rossi-alpha)", fontsize=14)
-    plt.ylabel("Count per Second (CPS)", fontsize=14)
-    plt.grid(True, alpha=0.3)
-    plt.legend(fontsize=12)
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    return plt.gcf() 
-
-# =============================================================================
-# 5. COMPARISON PLOTS
+# CPS COMPARISON PLOT
 # =============================================================================
 
 def plot_cps_comparison(stochastic_cps: list, 
-                       em_cps: list, 
-                       taylor_cps: list,
-                       config,
-                       dead_time_type: str = 'basic',
+                       em_cps: Optional[list] = None, 
+                       taylor_cps: Optional[list] = None,
+                       config=None,
+                       dead_time_type: str = 'without',
                        save_path: Optional[str] = None) -> plt.Figure:
     """
-    Create comparison plot of CPS values from stochastic, Euler-Maruyama, and Taylor simulations.
+    Create comparison plot of CPS values from stochastic,
+    Euler-Maruyama, and/or Taylor simulations.
     
     Parameters
     ----------
     stochastic_cps : list
         List of CPS values from stochastic simulations
-    em_cps : list
-        List of CPS values from Euler-Maruyama simulations
-    taylor_cps : list
-        List of CPS values from Taylor method simulations
+    em_cps : Optional[list], default=None
+        List of CPS values from Euler-Maruyama simulations. 
+        If None, EM plots will be skipped.
+    taylor_cps : Optional[list], default=None
+        List of CPS values from Taylor method simulations. 
+        If None, Taylor plots will be skipped.
     config : SimulationConfig
         Configuration object
     dead_time_type : str
-        Type of dead time ('basic', 'const', 'exp', 'without')
+        Type of dead time ('without', 'const','uniform', 'normal', 'gamma')
     save_path : Optional[str]
-        Path to save the plot
+        Path to save the plot. If None, the plot will not be saved automatically.
         
     Returns
     -------
@@ -550,17 +220,52 @@ def plot_cps_comparison(stochastic_cps: list,
         The generated comparison plot
     """
     
+    # Input validation
+    if not stochastic_cps or len(stochastic_cps) == 0:
+        raise ValueError("stochastic_cps cannot be empty")
+    
+    if config is None:
+        raise ValueError("config parameter is required")
+    
+    # Validate data lengths match config
+    expected_length = len(config.alpha_inv_vec)
+    if len(stochastic_cps) != expected_length:
+        raise ValueError(f"stochastic_cps length ({len(stochastic_cps)})"
+                         f"must match config.alpha_inv_vec length ({expected_length})")
+    
+    if em_cps is not None and len(em_cps) != expected_length:
+        raise ValueError(f"em_cps length ({len(em_cps)}) "
+                         f"must match config.alpha_inv_vec length ({expected_length})")
+    
+    if taylor_cps is not None and len(taylor_cps) != expected_length:
+        raise ValueError(f"taylor_cps length ({len(taylor_cps)})"
+                         f"must match config.alpha_inv_vec length ({expected_length})")
+        
     PlotStyle.setup_default_style()
     
-    # Change to 2x2 subplot layout to accommodate three methods
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+    # Determine which methods are available
+    has_em = em_cps is not None
+    has_taylor = taylor_cps is not None
+    
+    # Determine subplot layout based on available methods
+    if has_em and has_taylor:
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+        axs = [ax1, ax2, ax3, ax4]
+        main_title = "Count Rate Comparison: Stochastic vs Euler-Maruyama vs Taylor"
+    elif has_em or has_taylor:
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+        axs = [ax1, ax2]
+        main_title = (f"Count Rate Comparison: "
+                      f"Stochastic vs {'Euler-Maruyama' if has_em else 'Taylor'}")
+    else:
+        fig, ax1 = plt.subplots(1, 1, figsize=(10, 8))
+        axs = [ax1]
+        main_title = "Count Rate: Stochastic Simulation"
     
     # Add the main title
-    fig.suptitle("Count Rate Comparison: Stochastic vs Euler-Maruyama vs Taylor",
-                 fontsize=18, fontweight='bold', y=0.98)
+    fig.suptitle(main_title, fontsize=18, fontweight='bold', y=0.98)
     
     # Prepare data for plotting
-    # For stochastic: use mean values if arrays
     if isinstance(stochastic_cps[0], np.ndarray):
         stochastic_means = np.array([np.mean(cps) for cps in stochastic_cps])
         stochastic_stds = np.array([np.std(cps) for cps in stochastic_cps])
@@ -568,30 +273,22 @@ def plot_cps_comparison(stochastic_cps: list,
         stochastic_means = stochastic_cps
         stochastic_stds = None
     
-    # For Euler-Maruyama: should be single values
-    em_means = em_cps
+    title_suffix = _get_dead_time_title(dead_time_type)
     
-    # For Taylor: should be single values
-    taylor_means = taylor_cps
+    # Plot 1: Direct comparison
+    _plot_cps_comparison_subplot(ax1, x_data = config.alpha_inv_vec,
+                                 y_data = stochastic_means,
+                                 label = 'Stochastic Simulation',
+                                 color = 'blue', marker = 'o-',
+                                 title = f'CPS Comparison - {title_suffix}')
     
-    # Set title based on dead time type
-    dead_time_titles = {
-        'basic': 'Basic Dead Time',
-        'const': 'Constant Dead Time', 
-        'uniform' : 'Uniform Dead Time',
-        'exp': 'Exponential Dead Time',
-        'without': 'Without Dead Time'
-    }
+    if has_em:
+        ax1.plot(config.alpha_inv_vec, em_cps, 's-', color='red', 
+                 linewidth=2, markersize=6, label='Euler-Maruyama')
     
-    title_suffix = dead_time_titles.get(dead_time_type, dead_time_type.title())
-    
-    # Plot 1: Direct comparison of all three methods
-    ax1.plot(config.alpha_inv_vec, stochastic_means, 'o-', color='blue', 
-             linewidth=2, markersize=6, label='Stochastic Simulation')
-    ax1.plot(config.alpha_inv_vec, em_means, 's-', color='red', 
-             linewidth=2, markersize=6, label='Euler-Maruyama')
-    ax1.plot(config.alpha_inv_vec, taylor_means, '^-', color='green', 
-             linewidth=2, markersize=6, label='Taylor Method')  # ← ADD THIS
+    if has_taylor:
+        ax1.plot(config.alpha_inv_vec, taylor_cps, '^-', color='green', 
+                 linewidth=2, markersize=6, label='Taylor Method')
     
     # Add error bars for stochastic if available
     if stochastic_stds is not None:
@@ -600,80 +297,109 @@ def plot_cps_comparison(stochastic_cps: list,
                         stochastic_means + stochastic_stds, 
                         alpha=0.3, color='blue', label='Stochastic ±1σ')
     
-    ax1.set_xlabel('Inverse Rossi-alpha (1/α)', fontsize=12)
-    ax1.set_ylabel('Counts Per Second (CPS)', fontsize=12)
-    ax1.set_title(f'CPS Comparison - {title_suffix}', fontsize=14, fontweight='bold')
-    ax1.legend(fontsize=10)
-    ax1.grid(True, alpha=0.3)
-    ax1.set_xticks(config.alpha_inv_vec)
-    ax1.set_xticklabels([f'{val:.3f}' for val in config.alpha_inv_vec], rotation=45)
+    # Plot additional comparisons
+    plot_idx = 1
     
-    # Plot 2: EM vs Stochastic Relative Difference
-    with np.errstate(divide='ignore', invalid='ignore'):
-        em_relative_diff = (np.abs(stochastic_means - em_means) / 
-                           np.where(em_means != 0, em_means, np.nan))
+    if has_em and len(axs) > 1:
+        em_diff = _calculate_relative_difference(stochastic_means, em_cps)
+        _plot_cps_comparison_subplot(axs[plot_idx], config.alpha_inv_vec, em_diff,
+                                   'EM vs Stochastic', 'purple', 'o-',
+                                   f'EM vs Stochastic Difference - {title_suffix}',
+                                   ylabel='Relative Difference (%)')
+        plot_idx += 1
     
-    em_relative_diff_percent = em_relative_diff * 100
+    if has_taylor and len(axs) > plot_idx:
+        taylor_diff = _calculate_relative_difference(stochastic_means, taylor_cps)
+        _plot_cps_comparison_subplot(axs[plot_idx], config.alpha_inv_vec, taylor_diff,
+                                   'Taylor vs Stochastic', 'orange', 'o-',
+                                   f'Taylor vs Stochastic Difference - {title_suffix}',
+                                   ylabel='Relative Difference (%)')
+        plot_idx += 1
     
-    ax2.plot(config.alpha_inv_vec, em_relative_diff_percent, 'o-', color='purple', 
-             linewidth=2, markersize=6, label='EM vs Stochastic')
-    ax2.set_xlabel('Inverse Rossi-alpha (1/α)', fontsize=12)
-    ax2.set_ylabel('Relative Difference (%)', fontsize=12)
-    ax2.set_title(f'EM vs Stochastic Difference - {title_suffix}', fontsize=14,
-                  fontweight='bold')
-    ax2.legend(fontsize=10)
-    ax2.grid(True, alpha=0.3)
-    ax2.set_xticks(config.alpha_inv_vec)
-    ax2.set_xticklabels([f'{val:.3f}' for val in config.alpha_inv_vec], rotation=45)
-    
-    # Plot 3: Taylor vs Stochastic Relative Difference
-    with np.errstate(divide='ignore', invalid='ignore'):
-        taylor_relative_diff = (np.abs(stochastic_means - taylor_means) / 
-                               np.where(taylor_means != 0, taylor_means, np.nan))
-    
-    taylor_relative_diff_percent = taylor_relative_diff * 100
-    
-    ax3.plot(config.alpha_inv_vec, taylor_relative_diff_percent, 'o-', color='orange', 
-             linewidth=2, markersize=6, label='Taylor vs Stochastic')
-    ax3.set_xlabel('Inverse Rossi-alpha (1/α)', fontsize=12)
-    ax3.set_ylabel('Relative Difference (%)', fontsize=12)
-    ax3.set_title(f'Taylor vs Stochastic Difference - {title_suffix}', fontsize=14,
-                  fontweight='bold')
-    ax3.legend(fontsize=10)
-    ax3.grid(True, alpha=0.3)
-    ax3.set_xticks(config.alpha_inv_vec)
-    ax3.set_xticklabels([f'{val:.3f}' for val in config.alpha_inv_vec], rotation=45)
-    
-    # Plot 4: Taylor vs EM Relative Difference
-    with np.errstate(divide='ignore', invalid='ignore'):
-        taylor_em_diff = (np.abs(taylor_means - em_means) / 
-                          np.where(em_means != 0, em_means, np.nan))
-    
-    taylor_em_diff_percent = taylor_em_diff * 100
-    
-    ax4.plot(config.alpha_inv_vec, taylor_em_diff_percent, 'o-', color='brown', 
-             linewidth=2, markersize=6, label='Taylor vs EM')
-    ax4.set_xlabel('Inverse Rossi-alpha (1/α)', fontsize=12)
-    ax4.set_ylabel('Relative Difference (%)', fontsize=12)
-    ax4.set_title(f'Taylor vs EM Difference - {title_suffix}', fontsize=14,
-                  fontweight='bold')
-    ax4.legend(fontsize=10)
-    ax4.grid(True, alpha=0.3)
-    ax4.set_xticks(config.alpha_inv_vec)
-    ax4.set_xticklabels([f'{val:.3f}' for val in config.alpha_inv_vec], rotation=45)
+    if has_em and has_taylor and len(axs) > plot_idx:
+        taylor_em_diff = _calculate_relative_difference(taylor_cps, em_cps)
+        _plot_cps_comparison_subplot(axs[plot_idx], config.alpha_inv_vec, taylor_em_diff,
+                                   'Taylor vs EM', 'brown', 'o-',
+                                   f'Taylor vs EM Difference - {title_suffix}',
+                                   ylabel='Relative Difference (%)')
     
     plt.tight_layout()
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Plot saved to: {save_path}")
-    else:
-        # Auto-generate filename if none provided
-        auto_filename = utl.generate_filename('plot', 'CPS_Comparison_3Methods',
-                                              dead_time_type, config.fission_vec[0], '.png')
-        default_save_path = f'plots/{auto_filename}'
-        plt.savefig(default_save_path, dpi=300, bbox_inches='tight')
-        print(f"Plot auto-saved to: {default_save_path}")
-        
+    
+    plt.show()
     return fig
 
+def _plot_cps_comparison_subplot(ax, x_data, y_data, label, color, marker='o-', 
+                                title="", xlabel="Inverse Rossi-alpha (1/α)", 
+                                ylabel="Counts Per Second (CPS)"):
+    """
+    Helper function to plot a single CPS comparison subplot.
+    
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot on
+    x_data : np.ndarray
+        X-axis data (alpha_inv_vec)
+    y_data : np.ndarray
+        Y-axis data (CPS values)
+    label : str
+        Label for the plot line
+    color : str
+        Color for the plot line
+    marker : str
+        Marker style for the plot
+    title : str
+        Title for the subplot
+    xlabel : str
+        X-axis label
+    ylabel : str
+        Y-axis label
+    """
+    ax.plot(x_data, y_data, marker, color=color, linewidth=2, markersize=6,
+            label=label)
+    ax.set_xlabel(xlabel, fontsize=12)
+    ax.set_ylabel(ylabel, fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_xticks(x_data)
+    ax.set_xticklabels([f'{val:.3f}' for val in x_data], rotation=45)
+    
+def _calculate_relative_difference(values1, values2):
+    """
+    Calculate relative difference between two arrays, handling division by zero.
+    
+    Parameters
+    ----------
+    values1, values2 : np.ndarray
+        Arrays to compare
+        
+    Returns
+    -------
+    np.ndarray
+        Relative difference as percentage
+    """
+    values1 = np.array(values1)
+    values2 = np.array(values2)
+    
+    with np.errstate(divide='ignore', invalid='ignore'):
+        relative_diff = np.abs(values1 - values2) / np.where(values2 != 0, values2, np.nan)
+    return relative_diff * 100
+
+def _get_dead_time_title(dead_time_type):
+    """Get formatted title for dead time type."""
+    dead_time_titles = {
+        'without': 'Without Dead Time',
+        'const': 'Constant Dead Time', 
+        'uniform': 'Uniform Dead Time',
+        'normal' : 'Normal Dead Time',
+        'gamma' : 'Gamma Dead Time', 
+    }
+    return dead_time_titles.get(dead_time_type, dead_time_type.title())
+    
+
+    

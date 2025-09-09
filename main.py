@@ -84,9 +84,9 @@ import plot_simulations as ps
 # SIMULATION CONTROL FLAGS - MODIFY THESE TO CONTROL SIMULATIONS
 # =============================================================================
 # Set these flags to control which simulations run
-run_stochastic = True      # Run direct stochastic simulations
+run_stochastic = False      # Run direct stochastic simulations
 run_euler_maruyama = True  # Run Euler-Maruyama method simulations  
-run_taylor = True         # Run Taylor method simulations
+run_taylor = False         # Run Taylor method simulations
 
 # =============================================================================
 # ANALYSIS FLAGS
@@ -98,9 +98,9 @@ run_cps_analysis = True           # Run count rate analysis and plot comparison
 # SIMULATION PREFIXES - MODIFY THESE FOR DIFFERENT SIMULATION TYPES
 # =============================================================================
 # Prefixes determine the naming convention and organization of simulation results
-stochastic_prefix = 'mil_f'       # Million steps
-em_prefix = 'short_f'             # Short Simulation time for Euler-Maruayama (100_000 grid points)
-taylor_prefix = 'short_f'         # Short simulation time for Taylor methods (100_000 grid points)
+stochastic_prefix = 'hunmil_f'       # Million steps
+em_prefix = 'long_f'             # Short Simulation time for Euler-Maruayama (100_000 grid points)
+taylor_prefix = 'long_f'         # Short simulation time for Taylor methods (100_000 grid points)
 
 # =============================================================================
 # DEAD TIME CONFIGURATION - MODIFY THESE TO CONTROL DEAD TIME MODELS
@@ -110,8 +110,8 @@ taylor_prefix = 'short_f'         # Short simulation time for Taylor methods (10
 # Euler-Maruyama Dead Time Models
 EM_DEAD_TIME_MODELS = {
     'basic': False,      # No dead time effects
-    'const': True,       # Constant dead time
-    'uniform': False,    # Uniformly distributed dead time
+    'const': False,       # Constant dead time
+    'uniform': True,    # Uniformly distributed dead time
     'exp': False         # Exponentially distributed dead time
 }
 
@@ -127,7 +127,7 @@ TAYLOR_DEAD_TIME_MODELS = {
 # ANALYSIS CONFIGURATION
 # =============================================================================
 # Control which dead time type to analyze
-ANALYZE_DEAD_TIME_TYPE = 'const'  # Options: 'basic', 'const', 'uniform', 'exp'
+ANALYZE_DEAD_TIME_TYPE = 'uniform'  # Options: 'basic', 'const', 'uniform', 'exp'
 
 def main():
     """
@@ -151,7 +151,7 @@ def main():
     t_0 = config.t_0
     steps = 1_000_000 # Adjust as needed (default is 100_000_000)
     mean_tau = config.mean_tau
-    grid_points = 100_000 # Adjust as needed (default is 10_000_000)
+    grid_points = 10_000_000 # Adjust as needed (default is 10_000_000)
     
     print(f"Configuration loaded: {len(fission_vec)} fission values")
     print(f"Simulation parameters: steps={steps}, grid_points={grid_points}")
@@ -181,7 +181,7 @@ def main():
     
     if run_euler_maruyama:
         print("\n" + "="*60)
-        print("STEP 2: RUNNING EULER-MARUAMA SIMULATIONS")
+        print("STEP 2: RUNNING EULER-MARUYAMA SIMULATIONS")
         print("="*60)
         
         # Load time data from stochastic simulations
@@ -369,7 +369,7 @@ def test_cps_calculations(config, data_manager, fission_vec, mean_tau,
             print(f"  Fission {fission}:")
             if isinstance(stochastic_cps[i], np.ndarray):
                 print(f"    Stochastic CPS: {np.mean(stochastic_cps[i]):.2f}"
-                      f"± {np.std(stochastic_cps[i]):.2f}")
+                      f"± {np.std(stochastic_cps[i]):..2f}")
             else:
                 print(f"    Stochastic CPS: {stochastic_cps[i]:.2f}")
             print(f"    Euler-Maruyama CPS: {em_cps[i]:.2f}")
@@ -397,6 +397,8 @@ def test_cps_calculations(config, data_manager, fission_vec, mean_tau,
         print(f"ERROR in CPS calculation: {e}")
         import traceback
         traceback.print_exc()
+        
+    return all_cps
         
 
 if __name__ == "__main__":

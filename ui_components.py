@@ -171,7 +171,7 @@ class DeadTimeAnalysisUI:
                 st.info("**Uniform Distribution**: Dead time is uniformly distributed between calculated bounds.")
             elif distribution_type == "Gamma":
                 st.info("**Gamma Distribution**: Dead time follows Gamma distribution with specified mean and standard deviation.")
-        
+                
         config = DeadTimeConfig(
             mean_dead_time=mean_dead_time,
             std_percent=std_percent,
@@ -179,7 +179,9 @@ class DeadTimeAnalysisUI:
             analysis_name=""  # Will be set below
         )
         
-        analysis_name = st.text_input("Analysis Name", value=config.get_display_name())
+        analysis_name = st.text_input("Analysis Name",
+                                      value=config.get_display_name())
+        
         config.analysis_name = analysis_name
         
         return config
@@ -205,7 +207,7 @@ class DeadTimeAnalysisUI:
     
         # Professional color and marker schemes
         colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown']
-        markers = ['o-', 's-', '^-', 'd-', 'v-', 'p-']
+        markers = ['o', 's', '^', 'd', 'v', 'p']
     
         for i, analysis in enumerate(analyses):
             color = colors[i % len(colors)]
@@ -219,7 +221,7 @@ class DeadTimeAnalysisUI:
             # Plot simulated CPS with professional styling
             ax.plot(alpha_inv_values, cps_values, marker, 
                     label=f"{analysis.config.analysis_name} (Simulated)", 
-                    color=color, markersize=8, linewidth=2)
+                    color=color, markersize = 8, linestyle = 'None')
         
             # Add theoretical CPS if available
             if analysis.has_theoretical_cps():
