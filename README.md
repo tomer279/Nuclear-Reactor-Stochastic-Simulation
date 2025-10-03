@@ -59,11 +59,7 @@ pip install streamlit numpy matplotlib scipy
 
 ### Option 1: Interactive Dashboard (Recommended)
 
-Launch the professional web-based dashboard:
-
-```bash
-streamlit run streamlit_app.py
-```
+Launch the professional web-based dashboard in https://nuclear-reactor-stochastic-simulation-dashboard.streamlit.app/
 
 **Dashboard Features:**
 - 🎛️ **Interactive Parameter Configuration** with validation and help systems
@@ -268,3 +264,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 - **Streamlit** for the excellent web framework
 
 ---
+
