@@ -109,8 +109,8 @@ RUN_CPS_ANALYSIS = True     # Count rate analysis
 
 ### Supported Distributions
 
-| Distribution | Description | Use Case |
-|-------------|-------------|----------|
+| Distribution | Description |
+|-------------|-------------|
 | **Constant** | Fixed dead time value |
 | **Normal** | Gaussian distribution |
 | **Uniform** | Uniform distribution |
@@ -258,5 +258,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 - **Streamlit** for the excellent web framework
 
 ---
+
 
 
