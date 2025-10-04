@@ -97,18 +97,13 @@ RUN_CPS_ANALYSIS = True     # Count rate analysis
 
 ### 2. Euler-Maruyama Methods
 - **First-order stochastic integration** for SDEs
-- **Constant dead time** implementation
-- **High-performance** vectorized operations
 
 ### 3. Taylor Series Methods
-- **Strong Taylor 1.5** scheme for higher accuracy
-- **Weak Taylor** methods for statistical analysis
-- **Advanced numerical stability**
+- **Strong Taylor 1.5 / Weak Taylor 2.0** scheme for higher accuracy
 
 ### 4. Runge-Kutta Integration
-- **Fourth-order** numerical integration
+- **Third-order** numerical integration
 - **Adaptive step size** control
-- **Error estimation** capabilities
 
 ## 📊 Dead Time Analysis
 
@@ -116,10 +111,10 @@ RUN_CPS_ANALYSIS = True     # Count rate analysis
 
 | Distribution | Description | Use Case |
 |-------------|-------------|----------|
-| **Constant** | Fixed dead time value | Ideal detector analysis |
-| **Normal** | Gaussian distribution | Realistic detector modeling |
-| **Uniform** | Uniform distribution | Bounded uncertainty analysis |
-| **Gamma** | Gamma distribution | Complex detector behavior |
+| **Constant** | Fixed dead time value |
+| **Normal** | Gaussian distribution |
+| **Uniform** | Uniform distribution |
+| **Gamma** | Gamma distribution |
 
 ### Analysis Features
 
@@ -127,7 +122,6 @@ RUN_CPS_ANALYSIS = True     # Count rate analysis
 - **Theoretical vs Simulated** comparison
 - **Statistical error analysis** with percentage differences
 - **Multi-configuration** comparison plots
-- **Publication-ready** visualizations
 
 ## 🌐 Live Dashboard
 
@@ -264,4 +258,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 - **Streamlit** for the excellent web framework
 
 ---
+
 
