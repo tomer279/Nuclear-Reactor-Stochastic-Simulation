@@ -730,6 +730,9 @@ def main():
     Sets up the Streamlit interface, handles user interactions,
     and orchestrates the complete application workflow.
     """
+    # Ensure session state is initialized (needed when run via root launcher on Streamlit Cloud)
+    if 'app_state' not in st.session_state:
+        st.session_state.app_state = AppState()
 
     st.title("Fission Chain Stochastic Simulation Dashboard")
     st.markdown("---")
@@ -755,3 +758,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
