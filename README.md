@@ -4,11 +4,11 @@
 [![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🚀 Overview
+## Overview
 
 A comprehensive, professional-grade framework for stochastic simulation of nuclear reactor neutron population dynamics. This project has evolved from a research prototype into a **modern, modular scientific computing platform** featuring multiple numerical methods, advanced dead time analysis, and an intuitive web-based dashboard.
 
-### 🎯 Key Capabilities
+### Key Capabilities
 
 - **Multiple Numerical Methods**: Stochastic, Euler-Maruyama, Taylor series, and Runge-Kutta simulations
 - **Advanced Dead Time Analysis**: Support for Constant, Normal, Uniform, and Gamma distributions
@@ -16,39 +16,41 @@ A comprehensive, professional-grade framework for stochastic simulation of nucle
 - **Theoretical Validation**: Analytical CPS calculations with simulation comparison
 - **Publication-Ready Outputs**: Professional visualizations and statistical analysis
 
-## 🏗️ Architecture
+## Architecture
 
 The project has undergone a **complete architectural transformation** from a monolithic structure to a modern, modular framework:
 
-### 📁 Project Structure
+### Project Structure
 
 ```
-├── 📊 streamlit_app.py          # Main interactive dashboard
-├── 🎯 main.py                   # Command-line simulation orchestrator
-├── 🧩 models.py                 # Data models with type safety
-├── ⚙️ services.py               # Business logic layer
-├── 🎨 ui_components.py          # Reusable UI components
-├── 🔬 stochastic_simulation.py  # Core stochastic simulation engine
-├── 📈 euler_maruyama_methods.py # Euler-Maruyama numerical methods
-├── 📐 taylor_methods.py         # Taylor series expansion methods
-├── 🎲 runge_kutta_methods.py    # Runge-Kutta numerical integration
-├── 📊 plot_simulations.py       # Professional visualization tools
-├── 💾 data_management.py        # Data persistence and organization
-├── 🧮 count_rates.py           # Count rate analysis and dead time effects
-├── ⚡ core_parameters.py       # Physical parameter management
-├── 📁 data/                    # Simulation results storage
-└── 📚 Legacy Files/            # Deprecated legacy code
+├── 📁 config/ # Configuration and parameters
+├── 📁 scripts/ # CLI entry points
+│ └── main.py # Command-line simulation orchestrator
+├── 📁 src/
+│ ├── 📁 analysis/ # Convergence and count-rate analysis
+│ ├── 📁 core/ # Stochastic, Euler-Maruyama, Taylor, Runge-Kutta
+│ ├── 📁 detection/ # SDE detection model
+│ ├── 📁 models/ # Data models and core parameters
+│ ├── 📁 services/ # Business logic, simulation runner, data management
+│ ├── 📁 ui/ # Streamlit app and UI components
+│ │ ├── streamlit_app.py # Main interactive dashboard
+│ │ └── ui_components.py # Reusable UI components
+│ ├── 📁 utils/ # Utilities and analytical solutions
+│ └── 📁 visualization/ # Plotting and visualization tools
+├── requirements.txt # Python dependencies
+├── README.md
+└── 📁 data/ # Simulation results storage (created at runtime)
 ```
 
-### 🎨 Modern Design Patterns
+### Modern Design Patterns
 
 - **Service Layer Architecture**: Clean separation of business logic from UI
 - **Data Models**: Type-safe, validated data structures with comprehensive methods
-- **Component-Based UI**: Reusable Streamlit components for consistent interface
+- **Component-Based UI**: Reusable Streamlit components for a consistent interface
 - **Dependency Injection**: Modular, testable architecture
 - **Professional Error Handling**: Comprehensive exception management
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -62,12 +64,12 @@ pip install streamlit numpy matplotlib scipy
 Launch the professional web-based dashboard in https://nuclear-reactor-stochastic-simulation-dashboard.streamlit.app/
 
 **Dashboard Features:**
-- 🎛️ **Interactive Parameter Configuration** with validation and help systems
-- 📊 **Real-time Simulation Execution** with progress tracking
-- 📈 **Professional Visualization** with comparative plots and summary tables
-- 🔬 **Advanced Dead Time Analysis** supporting multiple distributions
-- 📐 **Theoretical vs Simulated Comparison** for equilibrium conditions
-- 📋 **Multi-Analysis Comparison** with publication-ready outputs
+- **Interactive Parameter Configuration** with validation and help systems
+- **Real-time Simulation Execution** with progress tracking
+- **Professional Visualization** with comparative plots and summary tables
+- **Advanced Dead Time Analysis** supporting multiple distributions
+- **Theoretical vs Simulated Comparison** for equilibrium conditions
+- **Multi-Analysis Comparison** with publication-ready outputs
 
 ### Option 2: Command-Line Interface
 
@@ -88,7 +90,7 @@ RUN_RUNGE_KUTTA = True      # Runge-Kutta integration
 RUN_CPS_ANALYSIS = True     # Count rate analysis
 ```
 
-## 🔬 Simulation Methods
+## Simulation Methods
 
 ### 1. Stochastic Simulations
 - **Direct Monte Carlo** approach for baseline results
@@ -105,7 +107,7 @@ RUN_CPS_ANALYSIS = True     # Count rate analysis
 - **Third-order** numerical integration
 - **Adaptive step size** control
 
-## 📊 Dead Time Analysis
+## Dead Time Analysis
 
 ### Supported Distributions
 
@@ -123,7 +125,7 @@ RUN_CPS_ANALYSIS = True     # Count rate analysis
 - **Statistical error analysis** with percentage differences
 - **Multi-configuration** comparison plots
 
-## 🌐 Live Dashboard
+## Live Dashboard
 
 Access the deployed dashboard:
 **[🔗 Nuclear Reactor Simulation Dashboard](https://nuclear-reactor-stochastic-simulation-dashboard.streamlit.app/)**
@@ -153,9 +155,9 @@ Access the deployed dashboard:
    - Theoretical CPS calculations
    - Statistical analysis tools
 
-## 📈 Key Features
+## Key Features
 
-### 🎯 Professional Data Models
+### Professional Data Models
 
 ```python
 # Type-safe simulation parameters
@@ -189,14 +191,14 @@ dead_time_service = DeadTimeAnalysisService()
 analysis = dead_time_service.run_analysis(results, params, dead_time_config)
 ```
 
-### 📊 Advanced Visualization
+### Advanced Visualization
 
 - **Professional plotting** with consistent styling
 - **Publication-ready** figures with proper legends and formatting
 - **Interactive plots** in the Streamlit dashboard
 - **Comparative analysis** across multiple configurations
 
-## 🧪 Research Applications
+## Research Applications
 
 ### Nuclear Reactor Analysis
 - **Neutron population dynamics** simulation
@@ -215,7 +217,7 @@ analysis = dead_time_service.run_analysis(results, params, dead_time_config)
 - **Reactor monitoring** system development
 - **Statistical analysis** tools for nuclear engineering
 
-## 🛠️ Development
+## Development
 
 ### Code Quality Standards
 
@@ -233,14 +235,14 @@ The modular architecture makes it easy to:
 - Create custom visualization components
 - Extend the service layer for new analysis types
 
-## 📚 Documentation
+## Documentation
 
 - **Comprehensive docstrings** in all modules
 - **Usage examples** throughout the codebase
 - **Architectural decisions** documented in code comments
 - **API documentation** for all public methods
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! The modular architecture makes it easy to:
 - Add new simulation methods
@@ -248,16 +250,17 @@ We welcome contributions! The modular architecture makes it easy to:
 - Create custom visualization components
 - Extend analysis capabilities
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Cursor.ai** for development assistance
 - **Streamlit** for the excellent web framework
 
 ---
+
 
 
 
